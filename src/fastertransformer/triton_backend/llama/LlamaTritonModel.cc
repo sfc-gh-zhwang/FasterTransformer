@@ -84,6 +84,7 @@ LlamaTritonModel<T>::LlamaTritonModel(size_t      tensor_para_size,
 
     model_name_           = reader.Get("llama", "model_name");
     head_num_             = reader.GetInteger("llama", "head_num");
+    kv_head_num_          = reader.GetInteger("llama", "kv_head_num", head_num_);
     size_per_head_        = reader.GetInteger("llama", "size_per_head");
     inter_size_           = reader.GetInteger("llama", "inter_size");
     num_layer_            = reader.GetInteger("llama", "num_layer");
@@ -163,6 +164,7 @@ std::unique_ptr<AbstractTransformerModelInstance> LlamaTritonModel<T>::createMod
                                                                true);  // causal_mask
     auto              gpt            = std::make_unique<ft::Llama<T>>(
         ft::Llama<T>(head_num_,
+                     kv_head_num_,
                      size_per_head_,
                      inter_size_,
                      num_layer_,

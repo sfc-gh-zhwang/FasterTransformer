@@ -152,6 +152,9 @@ struct Multihead_attention_params<T, true>: public Multihead_attention_params_ba
 
     // required in case of masked attention with different length
     const int* length_per_sample = nullptr;
+
+    // required in case of multi-query-attention.
+    int num_kv_heads = 0;
 };
 
 template<class T>
