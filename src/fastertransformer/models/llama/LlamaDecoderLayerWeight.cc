@@ -20,13 +20,18 @@
 namespace fastertransformer {
 
 template<typename T>
-LlamaDecoderLayerWeight<T>::LlamaDecoderLayerWeight(const int  hidden_units,
+LlamaDecoderLayerWeight<T>::LlamaDecoderLayerWeight(const int  head_num,
+                                                    const int  kv_head_num,
+                                                    const int  size_per_head,
                                                     const int  inter_size,
                                                     const int  tensor_para_size,
                                                     const int  tensor_para_rank,
                                                     const bool use_gptj_residual,
                                                     const int  int8_mode):
-    hidden_units_(hidden_units),
+    head_num_(head_num),
+    kv_head_num_(kv_head_num),
+    size_per_head_(size_per_head),
+    hidden_units_(head_num * size_per_head),
     inter_size_(inter_size),
     tensor_para_size_(tensor_para_size),
     tensor_para_rank_(tensor_para_rank),
@@ -108,9 +113,10 @@ LlamaDecoderLayerWeight<T>::~LlamaDecoderLayerWeight()
 template<typename T>
 void LlamaDecoderLayerWeight<T>::copyFrom(const LlamaDecoderLayerWeight& other)
 {
+    int qkv_size = hidden_units_ + 2 * size_per_head_ * kv_head_num_;
     cudaD2Dcpy(weights_ptr[0], other.weights_ptr[0], hidden_units_);
     cudaD2Dcpy(weights_ptr[1], other.weights_ptr[1], hidden_units_);
-    cudaD2Dcpy(weights_ptr[3], other.weights_ptr[3], 3 * hidden_units_ / tensor_para_size_);
+    cudaD2Dcpy(weights_ptr[3], other.weights_ptr[3], qkv_size / tensor_para_size_);
     if (!use_gptj_residual_) {
         cudaD2Dcpy(weights_ptr[5], other.weights_ptr[5], hidden_units_);
     }
@@ -119,23 +125,22 @@ void LlamaDecoderLayerWeight<T>::copyFrom(const LlamaDecoderLayerWeight& other)
     cudaD2Dcpy(weights_ptr[11], other.weights_ptr[11], hidden_units_);
     cudaD2Dcpy(weights_ptr[12], other.weights_ptr[12], hidden_units_);
     cudaD2Dcpy(weights_ptr[13], other.weights_ptr[13], hidden_units_);
-
     if (int8_mode_ == 0) {
-        cudaD2Dcpy(weights_ptr[2], other.weights_ptr[2], hidden_units_ * 3 * hidden_units_ / tensor_para_size_);
+        cudaD2Dcpy(weights_ptr[2], other.weights_ptr[2], qkv_size * hidden_units_ / tensor_para_size_);
         cudaD2Dcpy(weights_ptr[4], other.weights_ptr[4], hidden_units_ / tensor_para_size_ * hidden_units_);
         cudaD2Dcpy(weights_ptr[6], other.weights_ptr[6], hidden_units_ * inter_size_ / tensor_para_size_);
         cudaD2Dcpy(weights_ptr[8], other.weights_ptr[8], hidden_units_ * inter_size_ / tensor_para_size_);
         cudaD2Dcpy(weights_ptr[10], other.weights_ptr[10], inter_size_ / tensor_para_size_ * hidden_units_);
     }
     else {
-        cudaD2Dcpy(int8_weights_ptr[0], other.int8_weights_ptr[0], hidden_units_ * 3 * hidden_units_ / tensor_para_size_);
+        cudaD2Dcpy(int8_weights_ptr[0], other.int8_weights_ptr[0], qkv_size * hidden_units_ / tensor_para_size_);
         cudaD2Dcpy(int8_weights_ptr[1], other.int8_weights_ptr[1], hidden_units_ / tensor_para_size_ * hidden_units_);
         cudaD2Dcpy(int8_weights_ptr[2], other.int8_weights_ptr[2], hidden_units_ * inter_size_ / tensor_para_size_);
         cudaD2Dcpy(int8_weights_ptr[3], other.int8_weights_ptr[3], hidden_units_ * inter_size_ / tensor_para_size_);
         cudaD2Dcpy(int8_weights_ptr[4], other.int8_weights_ptr[4], inter_size_ / tensor_para_size_ * hidden_units_);
         
         if (int8_mode_ == 1) {
-            cudaD2Dcpy(weight_only_scale_ptr[0], other.weight_only_scale_ptr[0], 3 * hidden_units_ / tensor_para_size_);
+            cudaD2Dcpy(weight_only_scale_ptr[0], other.weight_only_scale_ptr[0], qkv_size / tensor_para_size_);
             cudaD2Dcpy(weight_only_scale_ptr[1], other.weight_only_scale_ptr[1], hidden_units_);
             cudaD2Dcpy(weight_only_scale_ptr[2], other.weight_only_scale_ptr[2], inter_size_ / tensor_para_size_);
 
@@ -148,6 +153,9 @@ void LlamaDecoderLayerWeight<T>::copyFrom(const LlamaDecoderLayerWeight& other)
 
 template<typename T>
 LlamaDecoderLayerWeight<T>::LlamaDecoderLayerWeight(const LlamaDecoderLayerWeight& other):
+    head_num_(other.head_num_),
+    kv_head_num_(other.kv_head_num_),
+    size_per_head_(other.size_per_head_),
     hidden_units_(other.hidden_units_),
     inter_size_(other.inter_size_),
     tensor_para_size_(other.tensor_para_size_),
@@ -163,6 +171,9 @@ LlamaDecoderLayerWeight<T>::LlamaDecoderLayerWeight(const LlamaDecoderLayerWeigh
 template<typename T>
 LlamaDecoderLayerWeight<T>& LlamaDecoderLayerWeight<T>::operator=(const LlamaDecoderLayerWeight& other)
 {
+    head_num_          = other.head_num_;
+    kv_head_num_       = other.kv_head_num_;
+    size_per_head_     = other.size_per_head_;
     hidden_units_      = other.hidden_units_;
     inter_size_        = other.inter_size_;
     tensor_para_size_  = other.tensor_para_size_;
@@ -188,7 +199,9 @@ void LlamaDecoderLayerWeight<T>::loadModel(std::string dir_path, FtCudaDataType 
     loadWeightFromBin<T>(
         weights_ptr[1], {(size_t)hidden_units_}, dir_path + ".input_layernorm.weight.bin", model_file_type);
 
-    deviceFill(weights_ptr[3], (size_t)(3 * hidden_units_ / tensor_para_size_), (T)0.0);
+    int qkv_size = hidden_units_ + 2 * size_per_head_ * kv_head_num_;
+
+    deviceFill(weights_ptr[3], (size_t)(qkv_size / tensor_para_size_), (T)0.0);
 
     if (!use_gptj_residual_) {
         deviceFill(weights_ptr[5], (size_t)hidden_units_, (T)0.0);
@@ -218,7 +231,7 @@ void LlamaDecoderLayerWeight<T>::loadModel(std::string dir_path, FtCudaDataType 
 
     if (int8_mode_ == 0) {        
         loadWeightFromBin<T>(weights_ptr[2],
-                         {(size_t)hidden_units_, (size_t)(3 * hidden_units_ / tensor_para_size_)},
+                         {(size_t)hidden_units_, (size_t)(qkv_size / tensor_para_size_)},
                          dir_path + ".attention.query_key_value.weight." + rank_spec + ".bin",
                          model_file_type);
 
@@ -244,7 +257,7 @@ void LlamaDecoderLayerWeight<T>::loadModel(std::string dir_path, FtCudaDataType 
     else if (int8_mode_ == 1) {
         loadWeightFromBinAndQuantizeForWeightOnly<T>(int8_weights_ptr[0],
                                                      weight_only_scale_ptr[0],
-                                                     {(size_t)hidden_units_, (size_t)(3 * hidden_units_ / tensor_para_size_)},
+                                                     {(size_t)hidden_units_, (size_t)(qkv_size / tensor_para_size_)},
                                                      dir_path + ".attention.query_key_value.weight." + rank_spec + ".bin",
                                                      model_file_type);
 
@@ -319,7 +332,8 @@ void LlamaDecoderLayerWeight<T>::mallocWeights()
     deviceMalloc(&weights_ptr[0], hidden_units_); // pre layernorm beta
     deviceMalloc(&weights_ptr[1], hidden_units_); // pre layernorm gamma
     // deviceMalloc(&weights_ptr[2], hidden_units_ * 3 * hidden_units_ / tensor_para_size_); // qkv kernel
-    deviceMalloc(&weights_ptr[3], 3 * hidden_units_ / tensor_para_size_); // qkv bias
+    int qkv_size = hidden_units_ + 2 * size_per_head_ * kv_head_num_;
+    deviceMalloc(&weights_ptr[3], qkv_size / tensor_para_size_); // qkv bias
     // deviceMalloc(&weights_ptr[4], hidden_units_ / tensor_para_size_ * hidden_units_); // attention output weight
     if (!use_gptj_residual_) {
         deviceMalloc(&weights_ptr[5], hidden_units_); // attention output bias
@@ -335,7 +349,7 @@ void LlamaDecoderLayerWeight<T>::mallocWeights()
     deviceMalloc(&weights_ptr[13], hidden_units_); // post attn layernorm gamma
 
     if (int8_mode_ == 0) {
-        deviceMalloc(&weights_ptr[2], hidden_units_ * 3 * hidden_units_ / tensor_para_size_);  // qkv weight
+        deviceMalloc(&weights_ptr[2], qkv_size * hidden_units_ / tensor_para_size_);  // qkv weight
         deviceMalloc(&weights_ptr[4], hidden_units_ / tensor_para_size_ * hidden_units_);  // attention output weight
         deviceMalloc(&weights_ptr[6], hidden_units_ * inter_size_ / tensor_para_size_);   // intermediate_weight kernel
         deviceMalloc(&weights_ptr[8], hidden_units_ * inter_size_ / tensor_para_size_);  // intermediate_weight2 kernel
@@ -343,7 +357,7 @@ void LlamaDecoderLayerWeight<T>::mallocWeights()
     }
     else {
         // Alloc FFN and Attention int8 weights
-        deviceMalloc(&int8_weights_ptr[0], hidden_units_ * 3 * hidden_units_ / tensor_para_size_);
+        deviceMalloc(&int8_weights_ptr[0], qkv_size * hidden_units_ / tensor_para_size_);
         deviceMalloc(&int8_weights_ptr[1], hidden_units_ / tensor_para_size_ * hidden_units_);
         deviceMalloc(&int8_weights_ptr[2], hidden_units_ * inter_size_ / tensor_para_size_);
         deviceMalloc(&int8_weights_ptr[3], hidden_units_ * inter_size_ / tensor_para_size_);
@@ -352,7 +366,7 @@ void LlamaDecoderLayerWeight<T>::mallocWeights()
 
         if (int8_mode_ == 1) {
             // Alloc scales for weight only quant for attention and FFN weights
-            deviceMalloc(&weight_only_scale_ptr[0], 3 * hidden_units_ / tensor_para_size_);
+            deviceMalloc(&weight_only_scale_ptr[0], qkv_size / tensor_para_size_);
             deviceMalloc(&weight_only_scale_ptr[1], hidden_units_);
             deviceMalloc(&weight_only_scale_ptr[2], inter_size_ / tensor_para_size_);
             deviceMalloc(&weight_only_scale_ptr[3], inter_size_ / tensor_para_size_);
