@@ -64,12 +64,12 @@ LlamaWeight<T>::LlamaWeight(const int                                  hidden_un
     for (int l = 0; l < num_layer_; l++) {
         if (isValidLayerParallelId(l)) {
             decoder_layer_weights.push_back(new LlamaDecoderLayerWeight<T>(
-                hidden_units_, inter_size_, tensor_para_size_, tensor_para_rank_, use_gptj_residual_, int8_mode_));
+                head_num_, kv_head_num_, size_per_head_, inter_size_, tensor_para_size_, tensor_para_rank_, use_gptj_residual_, int8_mode_));
         }
         else {
             // Layer-parallelism: allocate empty layer because
             // this rank does not compute it:
-            decoder_layer_weights.push_back(new LlamaDecoderLayerWeight<T>(0, 0));
+            decoder_layer_weights.push_back(new LlamaDecoderLayerWeight<T>(0, 0, 0, 0));
         }
     }
 
