@@ -23,7 +23,7 @@
 namespace fastertransformer {
 
 template<typename T>
-class LlamaTensorParallelDecoderSelfAttentionLayer: public LlamaDecoderSelfAttentionLayer<T> {
+class TensorParallelLlamaDecoderSelfAttentionLayer: public LlamaDecoderSelfAttentionLayer<T> {
 private:
     NcclParam                           tensor_para_;
     std::shared_ptr<AbstractCustomComm> custom_all_reduce_comm_;
@@ -32,7 +32,7 @@ private:
 
 protected:
 public:
-    LlamaTensorParallelDecoderSelfAttentionLayer(size_t                              max_batch_size,
+    TensorParallelLlamaDecoderSelfAttentionLayer(size_t                              max_batch_size,
                                                 size_t                              head_num,
                                                 size_t                              kv_head_num,
                                                 size_t                              size_per_head,
@@ -51,7 +51,7 @@ public:
                                                 std::shared_ptr<AbstractCustomComm> custom_all_reduce_comm   = nullptr,
                                                 int                                 enable_custom_all_reduce = 0);
 
-    LlamaTensorParallelDecoderSelfAttentionLayer(size_t                              max_batch_size,
+    TensorParallelLlamaDecoderSelfAttentionLayer(size_t                              max_batch_size,
                                             size_t                              head_num,
                                             size_t                              kv_head_num,
                                             size_t                              size_per_head,
@@ -66,7 +66,7 @@ public:
                                             std::shared_ptr<AbstractCustomComm> custom_all_reduce_comm   = nullptr,
                                             int                                 enable_custom_all_reduce = 0);
 
-    LlamaTensorParallelDecoderSelfAttentionLayer(size_t                              max_batch_size,
+    TensorParallelLlamaDecoderSelfAttentionLayer(size_t                              max_batch_size,
                                             size_t                              head_num,
                                             size_t                              kv_head_num,
                                             size_t                              size_per_head,
@@ -83,7 +83,7 @@ public:
                                             std::shared_ptr<AbstractCustomComm> custom_all_reduce_comm   = nullptr,
                                             int                                 enable_custom_all_reduce = 0);
 
-    LlamaTensorParallelDecoderSelfAttentionLayer(size_t                              max_batch_size,
+    TensorParallelLlamaDecoderSelfAttentionLayer(size_t                              max_batch_size,
                                             size_t                              head_num,
                                             size_t                              kv_head_num,
                                             size_t                              size_per_head,
@@ -100,7 +100,7 @@ public:
                                             std::shared_ptr<AbstractCustomComm> custom_all_reduce_comm   = nullptr,
                                             int                                 enable_custom_all_reduce = 0);
 
-    LlamaTensorParallelDecoderSelfAttentionLayer(LlamaTensorParallelDecoderSelfAttentionLayer<T> const& attention_layer);
+    TensorParallelLlamaDecoderSelfAttentionLayer(TensorParallelLlamaDecoderSelfAttentionLayer<T> const& attention_layer);
 
     void
     forward(TensorMap* output_tensors, TensorMap* input_tensors, const AttentionWeight<T>* attention_weights) override;
