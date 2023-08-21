@@ -64,6 +64,7 @@ protected:
     using BaseAttentionLayer<T>::stream_;
     using BaseAttentionLayer<T>::sparse_;
     T*     qkv_buf_              = nullptr;
+    T*     qkv_buf_tmp_          = nullptr;
     T*     q_buf_2_              = nullptr;
     T*     k_buf_2_              = nullptr;
     T*     v_buf_2_              = nullptr;
