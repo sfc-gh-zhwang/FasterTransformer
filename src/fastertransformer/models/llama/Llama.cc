@@ -594,13 +594,13 @@ void Llama<T>::forward(std::unordered_map<std::string, Tensor>*       output_ten
 
     const std::vector<size_t> self_k_cache_shape = {num_layer_ / pipeline_para_.world_size_,
                                                     batch_size * beam_width,
-                                                    local_kv_head_num_,
+                                                    local_head_num_,
                                                     size_per_head_ / (16 / sizeof(T)),
                                                     max_cache_seq_len,
                                                     16 / sizeof(T)};
     const std::vector<size_t> self_v_cache_shape = {num_layer_ / pipeline_para_.world_size_,
                                                     batch_size * beam_width,
-                                                    local_kv_head_num_,
+                                                    local_head_num_,
                                                     max_cache_seq_len,
                                                     size_per_head_};
 
