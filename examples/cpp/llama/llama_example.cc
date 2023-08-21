@@ -313,6 +313,7 @@ void llama_example(const INIReader reader)
                                                        true);  // causal_mask
 
     Llama<T> gpt = Llama<T>(head_num,
+                            kv_head_num,
                             size_per_head,
                             inter_size,
                             decoder_layers,
