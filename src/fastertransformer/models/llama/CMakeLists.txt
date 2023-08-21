@@ -23,7 +23,7 @@ add_library(LlamaDecoder STATIC LlamaDecoder.cc)
 set_property(TARGET LlamaDecoder PROPERTY POSITION_INDEPENDENT_CODE  ON)
 set_property(TARGET LlamaDecoder PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
 target_link_libraries(LlamaDecoder PUBLIC -lcudart cublasMMWrapper
-                      TensorParallelDecoderSelfAttentionLayer
+                      TensorParallelLlamaDecoderSelfAttentionLayer
                       TensorParallelSiluFfnLayer
                       layernorm_kernels
                       add_residual_kernels
@@ -37,7 +37,7 @@ add_library(LlamaContextDecoder STATIC LlamaContextDecoder.cc)
 set_property(TARGET LlamaContextDecoder PROPERTY POSITION_INDEPENDENT_CODE  ON)
 set_property(TARGET LlamaContextDecoder PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
 target_link_libraries(LlamaContextDecoder PUBLIC -lcudart cublasMMWrapper
-                      TensorParallelGptContextAttentionLayer
+                      TensorParallelLlamaContextAttentionLayer
                       TensorParallelSiluFfnLayer
                       layernorm_kernels
                       add_residual_kernels
