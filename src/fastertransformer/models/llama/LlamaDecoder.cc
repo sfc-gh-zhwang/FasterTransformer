@@ -142,7 +142,7 @@ LlamaDecoder<T>::LlamaDecoder(size_t                              head_num,
                               int                                 enable_custom_all_reduce):
     BaseLayer(stream, cublas_wrapper, allocator, is_free_buffer_after_forward),
     head_num_(head_num),
-    kv_head_sum_(kv_head_sum),
+    kv_head_num_(kv_head_num),
     size_per_head_(size_per_head),
     inter_size_(inter_size),
     num_layer_(num_layer),
@@ -164,7 +164,7 @@ template<typename T>
 LlamaDecoder<T>::LlamaDecoder(LlamaDecoder<T> const& decoder):
     BaseLayer(decoder.stream_, decoder.cublas_wrapper_, decoder.allocator_, decoder.is_free_buffer_after_forward_),
     head_num_(decoder.head_num_),
-    kv_head_sum_(decoder.kv_head_sum_),
+    kv_head_num_(decoder.kv_head_num_),
     size_per_head_(decoder.size_per_head_),
     inter_size_(decoder.inter_size_),
     num_layer_(decoder.num_layer_),
