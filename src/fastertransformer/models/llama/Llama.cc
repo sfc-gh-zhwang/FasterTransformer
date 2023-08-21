@@ -27,6 +27,7 @@ template<typename T>
 void Llama<T>::initialize()
 {
     gpt_context_decoder_ = new LlamaContextDecoder<T>(head_num_,
+                                                      kv_head_num_,
                                                       size_per_head_,
                                                       inter_size_,
                                                       num_layer_,
