@@ -80,6 +80,7 @@ TensorParallelLlamaDecoderSelfAttentionLayer<T>::TensorParallelLlamaDecoderSelfA
     int                                 enable_custom_all_reduce):
     TensorParallelLlamaDecoderSelfAttentionLayer(max_batch_size,
                                             head_num,
+                                            kv_head_num,
                                             size_per_head,
                                             0,
                                             false,
