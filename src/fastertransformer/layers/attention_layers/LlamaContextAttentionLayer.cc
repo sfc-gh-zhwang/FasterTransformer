@@ -441,7 +441,7 @@ LlamaContextAttentionLayer<T>::LlamaContextAttentionLayer(size_t           max_b
                                                       size_t           kv_head_num,
                                                       size_t           size_per_head,
                                                       size_t           local_head_num,
-                                                      sizt_t           local_kv_head_num,
+                                                      size_t           local_kv_head_num,
                                                       cudaStream_t     stream,
                                                       cublasMMWrapper* cublas_wrapper,
                                                       IAllocator*      allocator,
