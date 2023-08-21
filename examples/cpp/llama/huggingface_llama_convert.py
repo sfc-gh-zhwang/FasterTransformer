@@ -22,15 +22,15 @@ from transformers import LlamaForCausalLM
 
 # using numpy extension: https://github.com/GreenWaves-Technologies/bfloat16
 # install the library with `pip install bfloat16`
-from bfloat16 import bfloat16
+# from bfloat16 import bfloat16
 
 def get_weight_data_type(data_type):
     if data_type == "fp32":
         return np.float32
     elif data_type == "fp16":
         return np.float16
-    elif data_type == "bf16":
-        return bfloat16
+    # elif data_type == "bf16":
+    #     return bfloat16
     else:
         assert False, f"Invalid weight data type {data_type}"
 
@@ -84,7 +84,7 @@ def split_and_convert(args):
     head_num = hf_config["num_attention_heads"]
     head_size = hidden_size // head_num
     num_layers = hf_config["num_hidden_layers"]
-
+    num_layers = 3
 
     np_weight_data_type = get_weight_data_type(args.weight_data_type)
 
@@ -94,6 +94,7 @@ def split_and_convert(args):
         config['llama'] = {}
         config['llama']['model_name'] = model_name
         config['llama']["head_num"] = str(head_num)
+        config['llama']["kv_head_num"] = str(head_num)
         config['llama']["size_per_head"] = str(head_size)
         config['llama']["inter_size"] = str(hf_config["intermediate_size"])
         config['llama']["num_layer"] = str(num_layers)
