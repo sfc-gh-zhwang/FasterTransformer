@@ -44,6 +44,7 @@ TensorParallelLlamaDecoderSelfAttentionLayer<T>::TensorParallelLlamaDecoderSelfA
                                  kv_head_num,
                                  size_per_head,
                                  head_num / tensor_para.world_size_,
+                                 kv_head_num / tensor_para.world_size_,
                                  rotary_embedding_dim,
                                  neox_rotary_style,
                                  d_model,
