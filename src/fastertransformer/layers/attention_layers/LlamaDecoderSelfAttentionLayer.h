@@ -35,7 +35,7 @@ private:
     const size_t size_per_head_;
     const size_t hidden_units_;
     const size_t local_head_num_;
-    const size_t local_kv_head_num_,
+    const size_t local_kv_head_num_;
     const size_t local_hidden_units_;
     const size_t d_model_;
     const float  q_scaling_;
