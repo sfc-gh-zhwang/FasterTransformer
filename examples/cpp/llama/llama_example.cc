@@ -84,6 +84,7 @@ void llama_example(const INIReader reader)
     int int8_mode  = reader.GetInteger("ft_instance_hyperparameter", "int8_mode", 0);
 
     const size_t head_num             = reader.GetInteger(model_name, "head_num");
+    const size_t kv_head_num             = reader.GetInteger(model_name, "kv_head_num");
     const size_t size_per_head        = reader.GetInteger(model_name, "size_per_head");
     const size_t vocab_size           = reader.GetInteger(model_name, "vocab_size");
     const size_t decoder_layers       = reader.GetInteger(model_name, "num_layer");
@@ -278,7 +279,9 @@ void llama_example(const INIReader reader)
     }
 
     const bool                          use_gptj_residual = false;
-    fastertransformer::LlamaWeight<T> gpt_weights(hidden_units,
+    fastertransformer::LlamaWeight<T> gpt_weights(head_num,
+                                                  kv_head_num,
+                                                  size_per_head,
                                                   inter_size,
                                                   vocab_size,
                                                   decoder_layers,
