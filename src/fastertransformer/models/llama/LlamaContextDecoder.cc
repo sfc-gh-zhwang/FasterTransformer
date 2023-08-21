@@ -19,16 +19,17 @@
 #include "src/fastertransformer/kernels/gpt_kernels.h"
 
 #include "src/fastertransformer/layers/TensorParallelSiluFfnLayer.h"
-#include "src/fastertransformer/layers/attention_layers/TensorParallelGptContextAttentionLayer.h"
+#include "src/fastertransformer/layers/attention_layers/TensorParallelLlamaContextAttentionLayer.h"
 
 namespace fastertransformer {
 
 template<typename T>
 void LlamaContextDecoder<T>::initialize()
 {
-    self_attention_layer_ = new TensorParallelGptContextAttentionLayer<T>(0,  // max_batch_size
+    self_attention_layer_ = new TensorParallelLlamaContextAttentionLayer<T>(0,  // max_batch_size
                                                                           0,  // max_seq_len
                                                                           head_num_,
+                                                                          kv_head_num_,
                                                                           size_per_head_,
                                                                           rotary_embedding_dim_,
                                                                           neox_rotary_style_,
@@ -155,6 +156,7 @@ int LlamaContextDecoder<T>::getFirstLayerParallelId()
 
 template<typename T>
 LlamaContextDecoder<T>::LlamaContextDecoder(size_t                              head_num,
+                                            size_t                              kv_head_num,
                                             size_t                              size_per_head,
                                             size_t                              inter_size,
                                             size_t                              num_layer,
@@ -175,6 +177,7 @@ LlamaContextDecoder<T>::LlamaContextDecoder(size_t                              
                                             int                                 enable_custom_all_reduce):
     BaseLayer(stream, cublas_wrapper, allocator, is_free_buffer_after_forward),
     head_num_(head_num),
+    kv_head_num_(kv_head_num),
     size_per_head_(size_per_head),
     inter_size_(inter_size),
     num_layer_(num_layer),
@@ -198,6 +201,7 @@ template<typename T>
 LlamaContextDecoder<T>::LlamaContextDecoder(LlamaContextDecoder<T> const& decoder):
     BaseLayer(decoder.stream_, decoder.cublas_wrapper_, decoder.allocator_, decoder.is_free_buffer_after_forward_),
     head_num_(decoder.head_num_),
+    kv_head_num_(decoder.kv_head_num_),
     size_per_head_(decoder.size_per_head_),
     inter_size_(decoder.inter_size_),
     num_layer_(decoder.num_layer_),

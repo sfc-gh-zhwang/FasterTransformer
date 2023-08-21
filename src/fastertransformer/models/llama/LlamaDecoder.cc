@@ -16,15 +16,16 @@
 
 #include "src/fastertransformer/models/llama/LlamaDecoder.h"
 #include "src/fastertransformer/layers/TensorParallelSiluFfnLayer.h"
-#include "src/fastertransformer/layers/attention_layers/LlamaTensorParallelDecoderSelfAttentionLayer.h"
+#include "src/fastertransformer/layers/attention_layers/TensorParallelLlamaDecoderSelfAttentionLayer.h"
 
 namespace fastertransformer {
 
 template<typename T>
 void LlamaDecoder<T>::initialize()
 {
-    self_attention_layer_ = new LlamaTensorParallelDecoderSelfAttentionLayer<T>(0,  // max_batch_size
+    self_attention_layer_ = new TensorParallelLlamaDecoderSelfAttentionLayer<T>(0,  // max_batch_size
                                                                            head_num_,
+                                                                           kv_head_num_,
                                                                            size_per_head_,
                                                                            rotary_embedding_dim_,
                                                                            neox_rotary_style_,
