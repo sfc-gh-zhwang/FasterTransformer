@@ -153,11 +153,26 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             int src_size = kv_head_num * size_per_head * token_num;
             float * dst = new float[dst_size];
             float * src = new float[src_size];
+            int qkv_size = (head_num+2*kv_head_num) * size_per_head;
+            for (int t=0; t < token_num; t++) {
+                for (int i=0; i < qkv_size; i++) {
+                    if (i < head_num * size_per_head) {
+                        src[t*qkv_size+i] = 1.f;
+                    }
+                    else if (i - head_num * size_per_head < kv_head_num * size_per_head) {
+                        src[t*qkv_size+i] = 2.f
+                    } else {
+                        src[t*qkv_size+i] = 3.f;
+                    }
+                }
+            }
 
             half* dst_buf = nullptr;
             dst_buf = (half*)allocator_->reMalloc(dst_buf, sizeof(float)*dst_size, true);
             half* src_buf = nullptr;
             src_buf = (half*)allocator_->reMalloc(src_buf, sizeof(float)*src_size, true);
+
+            cudaMemcpy(src_buf, src, sizeof(float)*src_size, cudaMemcpyHostToDevice);
 
             invokeRepeatKv(dst_buf,
                            src_buf,
@@ -166,6 +181,8 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                            size_per_head,
                            token_num,
                            stream_);
+
+            cudaMemcpy(dst, dst_buf, sizeof(float)*dst_size, cudaMemcpyDeviceToHost);
 
         }
         // {
