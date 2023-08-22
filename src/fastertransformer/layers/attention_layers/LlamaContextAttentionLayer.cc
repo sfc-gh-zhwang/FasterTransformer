@@ -144,7 +144,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                               qkv_size /* n */);
 
         T* qkv_buf;
-        const size_t st = 1000;
+        const size_t st = qkv_size;
         qkv_buf = new T[st];
         for (int i=0; i<st; i++) {
             qkv_buf[i] = 1.99;
