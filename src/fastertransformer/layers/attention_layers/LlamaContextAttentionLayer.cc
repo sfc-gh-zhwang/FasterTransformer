@@ -143,6 +143,24 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                               hidden_units_,  // k
                               qkv_buf_tmp_,
                               local_qkv_size /* n */);
+
+        {
+            float * dst = new float[10];
+            float * src = new float[10];
+            int head_num = 6;
+            int kv_head_num = 2;
+            int size_per_head = 3;
+            int token_num = 5;
+
+            invokeRepeatKv(dst,
+                           src,
+                           head_num,
+                           kv_head_num,
+                           size_per_head,
+                           token_num,
+                           stream_);
+
+        }
         // {
         //     printf("test\n");
         //     int m = 3;
