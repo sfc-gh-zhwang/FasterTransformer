@@ -154,7 +154,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
 
             for (int i=0; i<st; i++) {
                 A[i] = T(i);
-                B[i] = T(i+st);
+                B[i] = (T)((i+st));
                 printf("%f %f\n", A[i], B[i]);
             }
             T* a_buf = nullptr;
