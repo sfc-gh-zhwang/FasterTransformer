@@ -149,7 +149,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                        kv_head_num_,
                        size_per_head_,
                        m,
-                       stream_)
+                       stream_);
 
         // {
         //     const int head_num = 6;
