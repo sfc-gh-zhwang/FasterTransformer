@@ -18,6 +18,7 @@
 #include "src/fastertransformer/layers/attention_layers/LlamaContextAttentionLayer.h"
 #include "src/fastertransformer/kernels/unfused_attention_kernels.h"
 #include "src/fastertransformer/utils/nvtx_utils.h"
+#include "src/fastertransformer/models/llama/llama_utils.h"
 #include <cuda_runtime_api.h>
 
 namespace fastertransformer {
