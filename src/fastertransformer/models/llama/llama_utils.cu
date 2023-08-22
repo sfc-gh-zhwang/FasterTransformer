@@ -60,15 +60,13 @@ invokeRepeatKv(float* dst, const float* src, const int head_num, const int kv_he
 template void
 invokeRepeatKv(half* dst, const half* src, const int head_num, const int kv_head_num, const int size_per_head, const int token_num, cudaStream_t stream);
 #ifdef ENABLE_BF16
-template void invokeRepeatKv(__nv_bfloat16* dst, const __nv_bfloat16* src, const int head_num, const int kv_head_num, const int size_per_head, const int token_num, cudaStream_t stream);
-
-// template void invokeRepeatKv(const __nv_bfloat16* dst,
-//                              const __nv_bfloat16* src,
-//                              const int head_num,
-//                              const int kv_head_num,
-//                              const int size_per_head,
-//                              const int token_num,
-//                              cudaStream_t stream);
+template void invokeRepeatKv(__nv_bfloat16* dst,
+                             const __nv_bfloat16* src,
+                             const int head_num,
+                             const int kv_head_num,
+                             const int size_per_head,
+                             const int token_num,
+                             cudaStream_t stream);
 #endif
 
 }  // namespace fastertransformer
