@@ -184,6 +184,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             for (int i=0; i<m*n; i++) {
                 printf("%f ", C[i]);
             }
+            printf("\n");
             for (int i=0; i<m; i++) {
                 for (int j=0; j<n; j++) {
                     printf("%f ", C[i*n+j]);
