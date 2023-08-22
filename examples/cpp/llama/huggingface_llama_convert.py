@@ -72,6 +72,7 @@ def split_and_convert(args):
 
     # load position_embedding from rank 0
     # model = torch.load(ckpt_name)
+    print('load model')
     model = LlamaForCausalLM.from_pretrained(args.in_file)
     hf_config = vars(model.config)
     print(f"hf_config: {hf_config}")
