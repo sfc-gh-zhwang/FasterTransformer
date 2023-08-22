@@ -130,21 +130,21 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
     }
     else {
         printf("cublas_wrapper_->Gemm: %d\n", local_hidden_units_);
-        size_t qkv_size = local_hidden_units_ + 2 * local_kv_head_num_ * size_per_head_;
+        size_t local_qkv_size = local_hidden_units_ + 2 * local_kv_head_num_ * size_per_head_;
         cublas_wrapper_->Gemm(CUBLAS_OP_N,
                               CUBLAS_OP_N,
-                              qkv_size,  // n
+                              local_qkv_size,  // n
                               m,
                               hidden_units_,  // k
                               attention_weights->query_weight.kernel,
-                              qkv_size,  // n
+                              local_qkv_size,  // n
                               attention_input,
                               hidden_units_,  // k
-                              qkv_buf_,
-                              qkv_size /* n */);
+                              qkv_buf_tmp_,
+                              local_qkv_size /* n */);
 
         T* qkv_buf;
-        const size_t st = qkv_size;
+        const size_t st = local_qkv_size;
         qkv_buf = new T[st];
         for (int i=0; i<st; i++) {
             qkv_buf[i] = 1.99;
@@ -588,6 +588,8 @@ void LlamaContextAttentionLayer<T>::allocateBuffer(size_t batch_size, size_t seq
     // NOTE (perkzz): use sizeof(T) here for cutlass int8 kernels.
     const auto type_size = sizeof(T);
     qkv_buf_ = (T*)allocator_->reMalloc(qkv_buf_, type_size * 3 * batch_size * seq_len * local_hidden_units_, true);
+    size_t local_qkv_size = local_hidden_units_ + 2 * local_kv_head_num_ * size_per_head_;
+    qkv_buf_tmp_ = (T*)allocator_->reMalloc(qkv_buf_, type_size * batch_size * seq_len * local_qkv_size, true);
     q_buf_2_ = (T*)allocator_->reMalloc(q_buf_2_, sizeof(T) * batch_size * seq_len * 3 * local_hidden_units_, true);
     k_buf_2_ = q_buf_2_ + batch_size * seq_len * local_hidden_units_;
     v_buf_2_ = k_buf_2_ + batch_size * seq_len * local_hidden_units_;
@@ -641,6 +643,7 @@ void LlamaContextAttentionLayer<T>::freeBuffer()
     if (is_allocate_buffer_) {
         FT_LOG_DEBUG(__PRETTY_FUNCTION__);
         allocator_->free((void**)(&qkv_buf_));
+        allocator_->free((void**)(&qkv_buf_tmp_));
         allocator_->free((void**)(&q_buf_2_));
         allocator_->free((void**)(&qk_buf_));
         allocator_->free((void**)(&qkv_buf_2_));
