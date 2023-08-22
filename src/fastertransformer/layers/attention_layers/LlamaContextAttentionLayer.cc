@@ -167,22 +167,22 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                 }
             }
 
-            float* dst_buf = nullptr;
-            dst_buf = (float*)allocator_->reMalloc(dst_buf, sizeof(float)*dst_size, true);
-            float* src_buf = nullptr;
-            src_buf = (float*)allocator_->reMalloc(src_buf, sizeof(float)*src_size, true);
+            // float* dst_buf = nullptr;
+            // dst_buf = (float*)allocator_->reMalloc(dst_buf, sizeof(float)*dst_size, true);
+            // float* src_buf = nullptr;
+            // src_buf = (float*)allocator_->reMalloc(src_buf, sizeof(float)*src_size, true);
 
-            cudaMemcpy(src_buf, src, sizeof(float)*src_size, cudaMemcpyHostToDevice);
+            // cudaMemcpy(src_buf, src, sizeof(float)*src_size, cudaMemcpyHostToDevice);
 
-            invokeRepeatKv(dst_buf,
-                           src_buf,
-                           head_num,
-                           kv_head_num,
-                           size_per_head,
-                           token_num,
-                           stream_);
+            // invokeRepeatKv(dst_buf,
+            //                src_buf,
+            //                head_num,
+            //                kv_head_num,
+            //                size_per_head,
+            //                token_num,
+            //                stream_);
 
-            cudaMemcpy(dst, dst_buf, sizeof(float)*dst_size, cudaMemcpyDeviceToHost);
+            // cudaMemcpy(dst, dst_buf, sizeof(float)*dst_size, cudaMemcpyDeviceToHost);
 
         }
         // {
