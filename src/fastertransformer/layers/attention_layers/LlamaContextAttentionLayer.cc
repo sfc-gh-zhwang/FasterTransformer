@@ -173,7 +173,12 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             src_buf = (float*)allocator_->reMalloc(src_buf, sizeof(float)*src_size, true);
 
             cudaMemcpy(src_buf, src, sizeof(float)*src_size, cudaMemcpyHostToDevice);
-
+            for (int t=0; t < token_num; t++) {
+                for (int i=0; i < qkv_size; i++) {
+                    printf("%f ", src[t*3*head_num+i]);
+                }
+                printf("\n");
+            }
             invokeRepeatKv(dst_buf,
                            src_buf,
                            head_num,
