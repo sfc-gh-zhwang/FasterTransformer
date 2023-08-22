@@ -142,67 +142,67 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                               hidden_units_,  // k
                               qkv_buf_tmp_,
                               local_qkv_size /* n */);
-        {
-            printf("test\n");
-            int m = 3;
-            int n = m;
-            int k = 2;
-            int st = m*k;
-            half* A = new half[st];
-            half* B = new half[st];
-            half* C = new half[m*n];
-            int t = 0;
-            for (int i=0; i<st; i++) {
-                A[i] = static_cast<half>(float(i));
-                t = i+st;
-                B[i] = static_cast<half>(float(i));
-                printf("%f %f\n", (float)A[i], (float)B[i]);
-            }
-            half* a_buf = nullptr;
-            a_buf = (half*)allocator_->reMalloc(a_buf, sizeof(half)*st, true);
-            half* b_buf = nullptr;
-            b_buf = (half*)allocator_->reMalloc(b_buf, sizeof(half)*st, true);
-            half* c_buf = nullptr;
-            c_buf = (half*)allocator_->reMalloc(c_buf, sizeof(half)*m*n, true);
+        // {
+        //     printf("test\n");
+        //     int m = 3;
+        //     int n = m;
+        //     int k = 2;
+        //     int st = m*k;
+        //     half* A = new half[st];
+        //     half* B = new half[st];
+        //     half* C = new half[m*n];
+        //     int t = 0;
+        //     for (int i=0; i<st; i++) {
+        //         A[i] = static_cast<half>(float(i));
+        //         t = i+st;
+        //         B[i] = static_cast<half>(float(i));
+        //         printf("%f %f\n", (float)A[i], (float)B[i]);
+        //     }
+        //     half* a_buf = nullptr;
+        //     a_buf = (half*)allocator_->reMalloc(a_buf, sizeof(half)*st, true);
+        //     half* b_buf = nullptr;
+        //     b_buf = (half*)allocator_->reMalloc(b_buf, sizeof(half)*st, true);
+        //     half* c_buf = nullptr;
+        //     c_buf = (half*)allocator_->reMalloc(c_buf, sizeof(half)*m*n, true);
 
-            cudaMemcpy(a_buf, A, sizeof(half)*st, cudaMemcpyHostToDevice);
-            cudaMemcpy(b_buf, B, sizeof(half)*st, cudaMemcpyHostToDevice);
-            sync_check_cuda_error();
-            cublas_wrapper_->Gemm(CUBLAS_OP_N,
-                        CUBLAS_OP_N,
-                        m,  // n
-                        n,
-                        k,  // k
-                        a_buf,
-                        m,  // n
-                        b_buf,
-                        k,  // k
-                        c_buf,
-                        m /* n */);
-            sync_check_cuda_error();
-            printf("cudaMemcpy\n");
-            cudaMemcpy(C, a_buf, sizeof(half) * m * k, cudaMemcpyDeviceToHost);
-            sync_check_cuda_error();
-            for (int i=0; i<m*k; i++) {
-                printf("%f ", (float)C[i]);
-            }
-            printf("\n");
-            printf("cudaMemcpy\n");
-            cudaMemcpy(C, b_buf, sizeof(half) * m * k, cudaMemcpyDeviceToHost);
-            sync_check_cuda_error();
-            for (int i=0; i<m*k; i++) {
-                printf("%f ", (float)C[i]);
-            }
-            printf("\n");
-            printf("cudaMemcpy\n");
-            cudaMemcpy(C, c_buf, sizeof(half) * m * n, cudaMemcpyDeviceToHost);
-            sync_check_cuda_error();
-            for (int i=0; i<m*n; i++) {
-                printf("%f ", (float)C[i]);
-            }
-            printf("\n");
-            printf("test done\n");
-        }
+        //     cudaMemcpy(a_buf, A, sizeof(half)*st, cudaMemcpyHostToDevice);
+        //     cudaMemcpy(b_buf, B, sizeof(half)*st, cudaMemcpyHostToDevice);
+        //     sync_check_cuda_error();
+        //     cublas_wrapper_->Gemm(CUBLAS_OP_N,
+        //                 CUBLAS_OP_N,
+        //                 m,  // n
+        //                 n,
+        //                 k,  // k
+        //                 a_buf,
+        //                 m,  // n
+        //                 b_buf,
+        //                 k,  // k
+        //                 c_buf,
+        //                 m /* n */);
+        //     sync_check_cuda_error();
+        //     printf("cudaMemcpy\n");
+        //     cudaMemcpy(C, a_buf, sizeof(half) * m * k, cudaMemcpyDeviceToHost);
+        //     sync_check_cuda_error();
+        //     for (int i=0; i<m*k; i++) {
+        //         printf("%f ", (float)C[i]);
+        //     }
+        //     printf("\n");
+        //     printf("cudaMemcpy\n");
+        //     cudaMemcpy(C, b_buf, sizeof(half) * m * k, cudaMemcpyDeviceToHost);
+        //     sync_check_cuda_error();
+        //     for (int i=0; i<m*k; i++) {
+        //         printf("%f ", (float)C[i]);
+        //     }
+        //     printf("\n");
+        //     printf("cudaMemcpy\n");
+        //     cudaMemcpy(C, c_buf, sizeof(half) * m * n, cudaMemcpyDeviceToHost);
+        //     sync_check_cuda_error();
+        //     for (int i=0; i<m*n; i++) {
+        //         printf("%f ", (float)C[i]);
+        //     }
+        //     printf("\n");
+        //     printf("test done\n");
+        // }
 
         // T* qkv_buf;
         // const size_t st = local_qkv_size;

@@ -52,7 +52,7 @@ set_property(TARGET LlamaWeight PROPERTY POSITION_INDEPENDENT_CODE  ON)
 set_property(TARGET LlamaWeight PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
 target_link_libraries(LlamaWeight PUBLIC LlamaDecoderLayerWeight cuda_utils logger)
 
-add_library(Llama STATIC Llama.cc)
+add_library(Llama STATIC Llama.cc llama_utils.cu)
 set_property(TARGET Llama PROPERTY POSITION_INDEPENDENT_CODE  ON)
 set_property(TARGET Llama PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
 target_link_libraries(Llama PUBLIC -lcudart
