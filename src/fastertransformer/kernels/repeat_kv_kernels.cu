@@ -42,7 +42,7 @@ __global__ void repeat_kv(T* dst, const T* src, const int kv_head_num, const int
         for (int r = 0; r < repeat_num; r++) {
             int q_dst = 3 * repeat_num * kv_head_num * size_per_head * token_id + repeat_num * size_per_head * head_id + size_per_head * r + inner_id;
             int q_src = (repeat_num + 2) * kv_head_num * size_per_head * token_id + repeat_num * size_per_head * head_id + size_per_head * r + inner_id;
-            // dst[0] = src[0];
+            dst[q_dst] = src[q_src];
             // dst[3 * repeat_num * kv_head_num * size_per_head * token_id + head_id * size_per_head * r + inner_id] = src[(repeat_num + 2) * kv_head_num * size_per_head * token_num + head_id * size_per_head * r + inner_id];
             // dst[repeat_num * 3 * kv_head_num * size_per_head * token_num + repeat_num * kv_head_num * size_per_head + head_id * size_per_head * r + inner_id] = src[(repeat_num + 2) * kv_head_num * size_per_head * token_num + repeat_num * kv_head_num * size_per_head + head_id * size_per_head + inner_id];
             // dst[repeat_num * 3 * kv_head_num * size_per_head * token_num + 2 * repeat_num * kv_head_num * size_per_head + head_id * size_per_head * r + inner_id] = src[(repeat_num + 2) * kv_head_num * size_per_head * token_num + (repeat_num + 1) * kv_head_num * size_per_head + head_id * size_per_head + inner_id];
