@@ -184,7 +184,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                 }
                 printf("\n");
             }
-            printf("test done\n")
+            printf("test done\n");
         }
 
         // T* qkv_buf;
