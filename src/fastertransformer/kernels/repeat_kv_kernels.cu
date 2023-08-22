@@ -59,7 +59,7 @@ void invokeRepeatKv(T* dst, const T* src, const int head_num, const int kv_head_
         block.x = 1024;
         grid.x  = ceil(size_per_head * n / 1024.);
     }
-    repeat_kv<T><<<grid, block, 0, stream>>>(dst, src, head_num, kv_head_num, size_per_head, token_num);
+    repeat_kv<T><<<grid, block, 0, stream>>>(dst, src, kv_head_num, head_num/kv_head_num, size_per_head, token_num);
 }
 
 template void
