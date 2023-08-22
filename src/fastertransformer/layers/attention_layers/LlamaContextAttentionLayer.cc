@@ -146,6 +146,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
         T* qkv_buf;
         deviceMalloc(&qkv_buf, sizeof(T)*100);
         cudaMemcpy(qkv_buf_, qkv_buf, sizeof(T) * 100, cudaMemcpyDeviceToHost);
+        printf("cudaMemcpy\n");
         printf("%f\n", qkv_buf[0]);
         // cublas_wrapper_->Gemm(CUBLAS_OP_N,
         //                       CUBLAS_OP_N,
