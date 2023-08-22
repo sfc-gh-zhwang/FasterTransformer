@@ -589,7 +589,7 @@ void LlamaContextAttentionLayer<T>::allocateBuffer(size_t batch_size, size_t seq
     const auto type_size = sizeof(T);
     qkv_buf_ = (T*)allocator_->reMalloc(qkv_buf_, type_size * 3 * batch_size * seq_len * local_hidden_units_, true);
     size_t local_qkv_size = local_hidden_units_ + 2 * local_kv_head_num_ * size_per_head_;
-    qkv_buf_tmp_ = (T*)allocator_->reMalloc(qkv_buf_, type_size * batch_size * seq_len * local_qkv_size, true);
+    qkv_buf_tmp_ = (T*)allocator_->reMalloc(qkv_buf_tmp_, type_size * batch_size * seq_len * local_qkv_size, true);
     q_buf_2_ = (T*)allocator_->reMalloc(q_buf_2_, sizeof(T) * batch_size * seq_len * 3 * local_hidden_units_, true);
     k_buf_2_ = q_buf_2_ + batch_size * seq_len * local_hidden_units_;
     v_buf_2_ = k_buf_2_ + batch_size * seq_len * local_hidden_units_;
