@@ -48,12 +48,7 @@ __global__ void repeat_kv(T* dst, const T* src, const int kv_head_num, const int
             int v_dst = 3 * repeat_num * kv_head_num * size_per_head * token_id + 2 * repeat_num * kv_head_num * size_per_head + repeat_num * size_per_head * head_id + size_per_head * r + inner_id;
             int v_src = (repeat_num + 2) * kv_head_num * size_per_head * token_id + (repeat_num + 1) * kv_head_num * size_per_head + size_per_head * head_id + inner_id;
             dst[v_dst] = src[v_src];
-            // dst[3 * repeat_num * kv_head_num * size_per_head * token_id + head_id * size_per_head * r + inner_id] = src[(repeat_num + 2) * kv_head_num * size_per_head * token_num + head_id * size_per_head * r + inner_id];
-            // dst[repeat_num * 3 * kv_head_num * size_per_head * token_num + repeat_num * kv_head_num * size_per_head + head_id * size_per_head * r + inner_id] = src[(repeat_num + 2) * kv_head_num * size_per_head * token_num + repeat_num * kv_head_num * size_per_head + head_id * size_per_head + inner_id];
-            // dst[repeat_num * 3 * kv_head_num * size_per_head * token_num + 2 * repeat_num * kv_head_num * size_per_head + head_id * size_per_head * r + inner_id] = src[(repeat_num + 2) * kv_head_num * size_per_head * token_num + (repeat_num + 1) * kv_head_num * size_per_head + head_id * size_per_head + inner_id];
         }
-        // int 
-        // out[id] = (out[id] + (T)ldg(&bias[id % n])) * scale;
     }
 }
 
