@@ -142,25 +142,69 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                               hidden_units_,  // k
                               qkv_buf_tmp_,
                               local_qkv_size /* n */);
+        {
+            printf("test\n")
+            int m = 3;
+            int n = m;
+            int k = 2;
+            int st = m*k;
+            float* A = new float[st];
+            float* B = new float[st];
+            float* C = new float[m*n];
 
-        T* qkv_buf;
-        const size_t st = local_qkv_size;
-        qkv_buf = new T[st];
-        for (int i=0; i<st; i++) {
-            qkv_buf[i] = 1.99;
-            printf("%f ", double(qkv_buf[i]));
-            if (i % 500 == 499 ) {
+            for (int i=0; i<st; i++) {
+                A[i] = i;
+                B[i] = i+st;
+            }
+            float* a_buf = nullptr;
+            a_buf = (float*)allocator_->reMalloc(a_buf, sizeof(float)*st, true);
+            float* b_buf = nullptr;
+            b_buf = (float*)allocator_->reMalloc(b_buf, sizeof(float)*st, true);
+            float* c_buf = nullptr;
+            c_buf = (float*)allocator_->reMalloc(c_buf, sizeof(float)*m*n, true);
+
+            cudaMemcpy(a_buf, A, sizeof(float)*st, cudaMemcpyHostToDevice);
+            cudaMemcpy(b_buf, B, sizeof(float)*st, cudaMemcpyHostToDevice);
+
+            cublas_wrapper_->Gemm(CUBLAS_OP_N,
+                        CUBLAS_OP_N,
+                        m,  // n
+                        n,
+                        k,  // k
+                        a_buf,
+                        m,  // n
+                        b_buf,
+                        n,  // k
+                        c_buf,
+                        k /* n */);
+            cudaMemcpy(C, c_buf, sizeof(float) * m*n, cudaMemcpyDeviceToHost);
+            for (int i=0; i<m; i++) {
+                for (int j=0; j<n; j++) {
+                    printf("%f ", C[i*n+j]);
+                }
                 printf("\n");
             }
+            printf("test done\n")
         }
-        cudaMemcpy(qkv_buf, qkv_buf_tmp_, sizeof(T) * st, cudaMemcpyDeviceToDevice);
-        printf("cudaMemcpy\n");
-        for (int i=0; i<st; i++) {
-            printf("%f ", double(qkv_buf[i]));
-            if (i % 500 == 499 ) {
-                printf("\n");
-            }
-        }
+
+        // T* qkv_buf;
+        // const size_t st = local_qkv_size;
+        // qkv_buf = new T[st];
+        // for (int i=0; i<st; i++) {
+        //     qkv_buf[i] = 1.99;
+        //     printf("%f ", double(qkv_buf[i]));
+        //     if (i % 500 == 499 ) {
+        //         printf("\n");
+        //     }
+        // }
+        // cudaMemcpy(qkv_buf, qkv_buf_tmp_, sizeof(T) * st, cudaMemcpyDeviceToDevice);
+        // printf("cudaMemcpy\n");
+        // for (int i=0; i<st; i++) {
+        //     printf("%f ", double(qkv_buf[i]));
+        //     if (i % 500 == 499 ) {
+        //         printf("\n");
+        //     }
+        // }
         // cublas_wrapper_->Gemm(CUBLAS_OP_N,
         //                       CUBLAS_OP_N,
         //                       3 * local_hidden_units_,  // n
