@@ -143,61 +143,68 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                               hidden_units_,  // k
                               qkv_buf_tmp_,
                               local_qkv_size /* n */);
+        invokeRepeatKv(qkv_buf_,
+                       qkv_buf_tmp_,
+                       head_num_,
+                       kv_head_num_,
+                       size_per_head_,
+                       m,
+                       stream_)
 
-        {
-            const int head_num = 6;
-            const int kv_head_num = 2;
-            const int size_per_head = 3;
-            const int token_num = 3;
-            const int qkv_size = (head_num+2*kv_head_num) * size_per_head;
-            const int dst_size = 3 * head_num * size_per_head * token_num;
-            const int src_size = qkv_size * token_num;
-            float * dst = new float[dst_size];
-            float * src = new float[src_size];
-            for (int t=0; t < token_num; t++) {
-                for (int i=0; i < qkv_size; i++) {
-                    if (i < head_num * size_per_head) {
-                        src[t*qkv_size+i] = i;
-                    }
-                    else if (i - head_num * size_per_head < kv_head_num * size_per_head) {
-                        src[t*qkv_size+i] = i/10.f;
-                    } else {
-                        src[t*qkv_size+i] = i*10.f;
-                    }
-                }
-            }
+        // {
+        //     const int head_num = 6;
+        //     const int kv_head_num = 2;
+        //     const int size_per_head = 3;
+        //     const int token_num = 3;
+        //     const int qkv_size = (head_num+2*kv_head_num) * size_per_head;
+        //     const int dst_size = 3 * head_num * size_per_head * token_num;
+        //     const int src_size = qkv_size * token_num;
+        //     float * dst = new float[dst_size];
+        //     float * src = new float[src_size];
+        //     for (int t=0; t < token_num; t++) {
+        //         for (int i=0; i < qkv_size; i++) {
+        //             if (i < head_num * size_per_head) {
+        //                 src[t*qkv_size+i] = i;
+        //             }
+        //             else if (i - head_num * size_per_head < kv_head_num * size_per_head) {
+        //                 src[t*qkv_size+i] = i/10.f;
+        //             } else {
+        //                 src[t*qkv_size+i] = i*10.f;
+        //             }
+        //         }
+        //     }
 
-            float* dst_buf = nullptr;
-            dst_buf = (float*)allocator_->reMalloc(dst_buf, sizeof(float)*dst_size, true);
-            float* src_buf = nullptr;
-            src_buf = (float*)allocator_->reMalloc(src_buf, sizeof(float)*src_size, true);
+        //     float* dst_buf = nullptr;
+        //     dst_buf = (float*)allocator_->reMalloc(dst_buf, sizeof(float)*dst_size, true);
+        //     float* src_buf = nullptr;
+        //     src_buf = (float*)allocator_->reMalloc(src_buf, sizeof(float)*src_size, true);
 
-            cudaMemcpy(src_buf, src, sizeof(float)*src_size, cudaMemcpyHostToDevice);
-            for (int t=0; t < token_num; t++) {
-                for (int i=0; i < qkv_size; i++) {
-                    printf("%f ", src[t*qkv_size+i]);
-                }
-                printf("\n");
-            }
-            invokeRepeatKv(dst_buf,
-                           src_buf,
-                           head_num,
-                           kv_head_num,
-                           size_per_head,
-                           token_num,
-                           stream_);
-            sync_check_cuda_error();
-            cudaMemcpy(dst, dst_buf, sizeof(float)*dst_size, cudaMemcpyDeviceToHost);
-            printf("after: \n");
-            int j = 0;
-            for (int t=0; t < token_num; t++) {
-                for (int i=0; i < 3 * head_num * size_per_head; i++) {
-                    printf("%f ", dst[j++]);
-                }
-                printf("\n");
-            }
+        //     cudaMemcpy(src_buf, src, sizeof(float)*src_size, cudaMemcpyHostToDevice);
+        //     for (int t=0; t < token_num; t++) {
+        //         for (int i=0; i < qkv_size; i++) {
+        //             printf("%f ", src[t*qkv_size+i]);
+        //         }
+        //         printf("\n");
+        //     }
+        //     invokeRepeatKv(dst_buf,
+        //                    src_buf,
+        //                    head_num,
+        //                    kv_head_num,
+        //                    size_per_head,
+        //                    token_num,
+        //                    stream_);
+        //     sync_check_cuda_error();
+        //     cudaMemcpy(dst, dst_buf, sizeof(float)*dst_size, cudaMemcpyDeviceToHost);
+        //     printf("after: \n");
+        //     int j = 0;
+        //     for (int t=0; t < token_num; t++) {
+        //         for (int i=0; i < 3 * head_num * size_per_head; i++) {
+        //             printf("%f ", dst[j++]);
+        //         }
+        //         printf("\n");
+        //     }
 
-        }
+        // }
         // {
         //     printf("test\n");
         //     int m = 3;
