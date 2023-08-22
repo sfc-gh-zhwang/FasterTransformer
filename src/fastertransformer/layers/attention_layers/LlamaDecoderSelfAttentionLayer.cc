@@ -201,8 +201,10 @@ void LlamaDecoderSelfAttentionLayer<T>::allocateBuffer(size_t batch_size)
     const size_t type_size = int8_mode_ == 2 ? sizeof(int8_t) : sizeof(T);
     FT_LOG_DEBUG(__PRETTY_FUNCTION__);
     const size_t local_q_kv_head_num = local_head_num_ + 2 * local_kv_head_num_;
-    qkv_buf_ =
+    qkv_buf_tmp_ =
         reinterpret_cast<T*>(allocator_->reMalloc(qkv_buf_, type_size * batch_size * local_q_kv_head_num, false));
+    qkv_buf_ =
+        reinterpret_cast<T*>(allocator_->reMalloc(qkv_buf_, type_size * batch_size * 3 * local_hidden_units_, false));
     context_buf_ =
         reinterpret_cast<T*>(allocator_->reMalloc(context_buf_, type_size * batch_size * local_hidden_units_, false));
 
