@@ -90,7 +90,6 @@ def split_and_convert(args):
     head_num = hf_config["num_attention_heads"]
     head_size = hidden_size // head_num
     num_layers = hf_config["num_hidden_layers"]
-    num_layers = 3
 
     np_weight_data_type = get_weight_data_type(args.weight_data_type)
 
@@ -129,58 +128,58 @@ def split_and_convert(args):
     #   - model.layers.0.mlp.up_proj.weight
     #   - model.layers.0.input_layernorm.weight
     #   - model.layers.0.post_attention_layernorm.weight
-    # for l in range(num_layers):
-    #     print(f"converting layer {l}")
-    #     # first merge QKV into a single weight
-    #     # concat direct to FT shape: [hidden_size, 3, head_num, head_size]
-    #     # copied from huggingface_gptj_ckpt_convert.py
-    #     print(model[f'model.layers.{l}.self_attn.q_proj.weight'].shape)
-    #     print(model[f'model.layers.{l}.self_attn.k_proj.weight'].shape)
-    #     print(model[f'model.layers.{l}.self_attn.v_proj.weight'].shape)
-    #     # qkv_weights = np.stack([
-    #     #     param_to_weights(model[f'model.layers.{l}.self_attn.q_proj.weight']),
-    #     #     param_to_weights(model[f'model.layers.{l}.self_attn.k_proj.weight']),
-    #     #     param_to_weights(model[f'model.layers.{l}.self_attn.v_proj.weight']),
-    #     # ])
-    #     qkv_weights = np.concatenate((
-    #         param_to_weights(model[f'model.layers.{l}.self_attn.q_proj.weight']),
-    #         param_to_weights(model[f'model.layers.{l}.self_attn.k_proj.weight']),
-    #         param_to_weights(model[f'model.layers.{l}.self_attn.v_proj.weight']),
-    #     ), axis=0)
-    #     print(qkv_weights.shape)
-    #     # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
-    #     qkv_weights = np.transpose(qkv_weights)
-    #     qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
-    #     split_and_convert_process(saved_dir, factor, qkv_weights_base_name, qkv_weights)
+    for l in range(num_layers):
+        print(f"converting layer {l}")
+        # first merge QKV into a single weight
+        # concat direct to FT shape: [hidden_size, 3, head_num, head_size]
+        # copied from huggingface_gptj_ckpt_convert.py
+        print(model[f'model.layers.{l}.self_attn.q_proj.weight'].shape)
+        print(model[f'model.layers.{l}.self_attn.k_proj.weight'].shape)
+        print(model[f'model.layers.{l}.self_attn.v_proj.weight'].shape)
+        # qkv_weights = np.stack([
+        #     param_to_weights(model[f'model.layers.{l}.self_attn.q_proj.weight']),
+        #     param_to_weights(model[f'model.layers.{l}.self_attn.k_proj.weight']),
+        #     param_to_weights(model[f'model.layers.{l}.self_attn.v_proj.weight']),
+        # ])
+        qkv_weights = np.concatenate((
+            param_to_weights(model[f'model.layers.{l}.self_attn.q_proj.weight']),
+            param_to_weights(model[f'model.layers.{l}.self_attn.k_proj.weight']),
+            param_to_weights(model[f'model.layers.{l}.self_attn.v_proj.weight']),
+        ), axis=0)
+        print(qkv_weights.shape)
+        # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
+        qkv_weights = np.transpose(qkv_weights)
+        qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
+        split_and_convert_process(saved_dir, factor, qkv_weights_base_name, qkv_weights)
 
-    #     # attention dense
-    #     o_weight = param_to_weights(model[f'model.layers.{l}.self_attn.o_proj.weight']).T
-    #     o_weight_base_name = f'model.layers.{l}.attention.dense.weight'
-    #     split_and_convert_process(saved_dir, factor, o_weight_base_name, o_weight)
+        # attention dense
+        o_weight = param_to_weights(model[f'model.layers.{l}.self_attn.o_proj.weight']).T
+        o_weight_base_name = f'model.layers.{l}.attention.dense.weight'
+        split_and_convert_process(saved_dir, factor, o_weight_base_name, o_weight)
 
-    #     # MLP
-    #     mlp_down_weight = param_to_weights(model[f'model.layers.{l}.mlp.down_proj.weight']).T
-    #     mlp_down_base_name = f'model.layers.{l}.mlp.down_proj.weight'
-    #     split_and_convert_process(saved_dir, factor, mlp_down_base_name, mlp_down_weight)
+        # MLP
+        mlp_down_weight = param_to_weights(model[f'model.layers.{l}.mlp.down_proj.weight']).T
+        mlp_down_base_name = f'model.layers.{l}.mlp.down_proj.weight'
+        split_and_convert_process(saved_dir, factor, mlp_down_base_name, mlp_down_weight)
 
-    #     mlp_gate_weight = param_to_weights(model[f'model.layers.{l}.mlp.gate_proj.weight']).T
-    #     mlp_gate_base_name = f'model.layers.{l}.mlp.gate_proj.weight'
-    #     split_and_convert_process(saved_dir, factor, mlp_gate_base_name, mlp_gate_weight)
+        mlp_gate_weight = param_to_weights(model[f'model.layers.{l}.mlp.gate_proj.weight']).T
+        mlp_gate_base_name = f'model.layers.{l}.mlp.gate_proj.weight'
+        split_and_convert_process(saved_dir, factor, mlp_gate_base_name, mlp_gate_weight)
 
-    #     mlp_up_weight = param_to_weights(model[f'model.layers.{l}.mlp.up_proj.weight']).T
-    #     mlp_up_base_name = f'model.layers.{l}.mlp.up_proj.weight'
-    #     split_and_convert_process(saved_dir, factor, mlp_up_base_name, mlp_up_weight)
+        mlp_up_weight = param_to_weights(model[f'model.layers.{l}.mlp.up_proj.weight']).T
+        mlp_up_base_name = f'model.layers.{l}.mlp.up_proj.weight'
+        split_and_convert_process(saved_dir, factor, mlp_up_base_name, mlp_up_weight)
 
-    #     # LayerNorm
-    #     input_ln_weight = param_to_weights(model[f'model.layers.{l}.input_layernorm.weight'])
-    #     input_ln_base_name = f'model.layers.{l}.input_layernorm.weight'
-    #     split_and_convert_process(saved_dir, factor, input_ln_base_name, input_ln_weight)
+        # LayerNorm
+        input_ln_weight = param_to_weights(model[f'model.layers.{l}.input_layernorm.weight'])
+        input_ln_base_name = f'model.layers.{l}.input_layernorm.weight'
+        split_and_convert_process(saved_dir, factor, input_ln_base_name, input_ln_weight)
 
-    #     post_attn_ln_weight = param_to_weights(model[f'model.layers.{l}.post_attention_layernorm.weight'])
-    #     post_attn_ln_base_name = f'model.layers.{l}.post_attention_layernorm.weight'
-    #     split_and_convert_process(saved_dir, factor, post_attn_ln_base_name, post_attn_ln_weight)
+        post_attn_ln_weight = param_to_weights(model[f'model.layers.{l}.post_attention_layernorm.weight'])
+        post_attn_ln_base_name = f'model.layers.{l}.post_attention_layernorm.weight'
+        split_and_convert_process(saved_dir, factor, post_attn_ln_base_name, post_attn_ln_weight)
 
-    #     print(f"done layer {l}")
+        print(f"done layer {l}")
 
 
     # final common weights
