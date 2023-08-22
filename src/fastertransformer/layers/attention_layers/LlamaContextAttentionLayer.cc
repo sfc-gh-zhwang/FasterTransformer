@@ -145,15 +145,22 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                               local_qkv_size /* n */);
 
         {
-            float * dst = new float[10];
-            float * src = new float[10];
             int head_num = 6;
             int kv_head_num = 2;
             int size_per_head = 3;
             int token_num = 5;
+            int dst_size = head_num * size_per_head * token_num;
+            int src_size = kv_head_num * size_per_head * token_num;
+            float * dst = new float[dst_size];
+            float * src = new float[src_size];
 
-            invokeRepeatKv(dst,
-                           src,
+            half* dst_buf = nullptr;
+            dst_buf = (half*)allocator_->reMalloc(dst_buf, sizeof(float)*dst_size, true);
+            half* src_buf = nullptr;
+            src_buf = (half*)allocator_->reMalloc(src_buf, sizeof(float)*src_size, true);
+
+            invokeRepeatKv(dst_buf,
+                           src_buf,
                            head_num,
                            kv_head_num,
                            size_per_head,
