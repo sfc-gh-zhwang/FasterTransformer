@@ -166,7 +166,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
 
             cudaMemcpy(a_buf, A, sizeof(float)*st, cudaMemcpyHostToDevice);
             cudaMemcpy(b_buf, B, sizeof(float)*st, cudaMemcpyHostToDevice);
-
+            sync_check_cuda_error();
             cublas_wrapper_->Gemm(CUBLAS_OP_N,
                         CUBLAS_OP_N,
                         m,  // n
