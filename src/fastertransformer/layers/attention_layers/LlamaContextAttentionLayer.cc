@@ -18,6 +18,7 @@
 #include "src/fastertransformer/layers/attention_layers/LlamaContextAttentionLayer.h"
 #include "src/fastertransformer/kernels/unfused_attention_kernels.h"
 #include "src/fastertransformer/utils/nvtx_utils.h"
+#include <cuda_runtime_api.h>
 
 namespace fastertransformer {
 
@@ -141,7 +142,11 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                               hidden_units_,  // k
                               qkv_buf_,
                               qkv_size /* n */);
-        printf("%f\n", qkv_buf_[0]);
+
+        T* qkv_buf;
+        deviceMalloc(&qkv_buf, sizeof(T)*100);
+        cudaMemcpy(qkv_buf_, qkv_buf, sizeof(T) * 100, cudaMemcpyDeviceToHost);
+        printf("%f\n", qkv_buf[0]);
         // cublas_wrapper_->Gemm(CUBLAS_OP_N,
         //                       CUBLAS_OP_N,
         //                       3 * local_hidden_units_,  // n
