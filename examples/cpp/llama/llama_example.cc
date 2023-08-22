@@ -462,10 +462,10 @@ void llama_example(const INIReader reader)
                     if ((i + 1) % (total_output_len) == 0) {
                         outFile << std::endl;
                     }
-
-                    if (i < 10) {
-                        printf("%5d ", hBuf[i]);
-                    }
+                    printf("%5d ", hBuf[i]);
+                    // if (i < 10) {
+                    //     printf("%5d ", hBuf[i]);
+                    // }
                     if ((i + 1) % (total_output_len) == 0 && i < 10) {
                         std::cout << std::endl;
                     }
