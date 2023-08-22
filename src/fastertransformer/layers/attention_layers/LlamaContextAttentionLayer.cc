@@ -198,7 +198,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             cudaMemcpy(C, c_buf, sizeof(float) * m * n, cudaMemcpyDeviceToHost);
             sync_check_cuda_error();
             for (int i=0; i<m*n; i++) {
-                printf("%f ", (double)C[i]);
+                printf("%f ", (T)C[i]);
             }
             printf("\n");
             printf("test done\n");
