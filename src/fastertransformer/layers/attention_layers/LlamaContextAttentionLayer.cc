@@ -179,7 +179,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                         c_buf,
                         m /* n */);
             sync_check_cuda_error();
-            cudaMemcpy(C, c_buf, sizeof(float) * m*n, cudaMemcpyDeviceToHost);
+            cudaMemcpy(C, a_buf, sizeof(float) * m*n, cudaMemcpyDeviceToHost);
             sync_check_cuda_error();
             for (int i=0; i<m; i++) {
                 for (int j=0; j<n; j++) {
