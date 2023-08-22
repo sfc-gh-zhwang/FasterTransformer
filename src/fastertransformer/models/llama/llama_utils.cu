@@ -34,6 +34,7 @@ __global__ void repeat_kv(T* dst, const T* src, const int head_num, const int kv
 {
     for (int id = blockIdx.x * blockDim.x + threadIdx.x; id < kv_head_num * token_num * size_per_head; id += blockDim.x * gridDim.x) {
         int token_id = id % token_num;
+        int 
         out[id] = (out[id] + (T)ldg(&bias[id % n])) * scale;
     }
 }
@@ -51,7 +52,7 @@ void invokeRepeatKv(T* dst, const T* src, const int head_num, const int kv_head_
         block.x = 1024;
         grid.x  = ceil(m * n / 1024.);
     }
-    add_bias_mul<T><<<grid, block, 0, stream>>>(out, bias, scale, m, n / data_type_factor);
+    repeat_kv<T><<<grid, block, 0, stream>>>(out, bias, scale, m, n / data_type_factor);
 }
 
 template void
