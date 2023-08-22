@@ -332,6 +332,7 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
     AttentionType attention_type  = (d_prefix_prompt_lengths != nullptr) ?
                                         getUnfusedAttentionType(attention_type_) :
                                         attention_type_;
+    throw attention_type;
     const bool    is_unpadded_mha = isUnPaddedMHA(attention_type);
 
     for (int ite = 0; ite < iteration_num; ite++) {
