@@ -43,7 +43,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
     //      hidden_features [token_num, hidden_dimension]
     //      key_cache [batch, local_head_num, size_per_head // x, max_seq_len, x]
     //      value_cache [batch, local_head_num, max_seq_len, size_per_head]
-    printf("LlamaContextAttentionLayer<T>::forward");
+    printf("LlamaContextAttentionLayer<T>::forward\n");
     FT_LOG_DEBUG("%s start", __PRETTY_FUNCTION__);
     FT_CHECK(output_tensors->at("key_cache").shape.size() == 5);
     FT_CHECK(output_tensors->at("value_cache").shape.size() == 4
@@ -128,6 +128,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                                   true);
     }
     else {
+        printf("cublas_wrapper_->Gemm\n");
         cublas_wrapper_->Gemm(CUBLAS_OP_N,
                               CUBLAS_OP_N,
                               3 * local_hidden_units_,  // n
