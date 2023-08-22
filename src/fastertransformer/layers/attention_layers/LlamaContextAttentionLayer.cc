@@ -147,7 +147,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
         const size_t st = 1000;
         qkv_buf = new T[st];
         for (int i=0; i<st; i++) {
-            qkv_buf[i] = i;
+            qkv_buf[i] = 1.99;
             printf("%f ", double(qkv_buf[i]));
             if (i % 500 == 499 ) {
                 printf("\n");
