@@ -156,7 +156,6 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             float * src = new float[src_size];
             for (int t=0; t < token_num; t++) {
                 for (int i=0; i < qkv_size; i++) {
-                    printf("%d\n", t*qkv_size+i);
                     if (i < head_num * size_per_head) {
                         src[t*qkv_size+i] = 1.f;
                     }
@@ -168,22 +167,28 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                 }
             }
 
-            // float* dst_buf = nullptr;
-            // dst_buf = (float*)allocator_->reMalloc(dst_buf, sizeof(float)*dst_size, true);
-            // float* src_buf = nullptr;
-            // src_buf = (float*)allocator_->reMalloc(src_buf, sizeof(float)*src_size, true);
+            float* dst_buf = nullptr;
+            dst_buf = (float*)allocator_->reMalloc(dst_buf, sizeof(float)*dst_size, true);
+            float* src_buf = nullptr;
+            src_buf = (float*)allocator_->reMalloc(src_buf, sizeof(float)*src_size, true);
 
-            // cudaMemcpy(src_buf, src, sizeof(float)*src_size, cudaMemcpyHostToDevice);
+            cudaMemcpy(src_buf, src, sizeof(float)*src_size, cudaMemcpyHostToDevice);
 
-            // invokeRepeatKv(dst_buf,
-            //                src_buf,
-            //                head_num,
-            //                kv_head_num,
-            //                size_per_head,
-            //                token_num,
-            //                stream_);
+            invokeRepeatKv(dst_buf,
+                           src_buf,
+                           head_num,
+                           kv_head_num,
+                           size_per_head,
+                           token_num,
+                           stream_);
 
-            // cudaMemcpy(dst, dst_buf, sizeof(float)*dst_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy(dst, dst_buf, sizeof(float)*dst_size, cudaMemcpyDeviceToHost);
+            for (int t=0; t < token_num; t++) {
+                for (int i=0; i < 3 * head_num * size_per_head; i++) {
+                    printf("%f ", dst[t*3*head_num+i]);
+                }
+                printf("\n");
+            }
 
         }
         // {
