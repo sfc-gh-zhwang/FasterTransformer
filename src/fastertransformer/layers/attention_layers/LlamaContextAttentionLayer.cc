@@ -141,6 +141,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                               hidden_units_,  // k
                               qkv_buf_,
                               qkv_size /* n */);
+        printf("%f\n", qkv_buf_[0]);
         // cublas_wrapper_->Gemm(CUBLAS_OP_N,
         //                       CUBLAS_OP_N,
         //                       3 * local_hidden_units_,  // n
