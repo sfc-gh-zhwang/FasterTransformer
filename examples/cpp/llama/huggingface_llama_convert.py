@@ -17,21 +17,20 @@ import configparser
 import numpy as np
 from pathlib import Path
 
-import torch
 import os
-from transformers import LlamaForCausalLM, AutoConfig
+from transformers import LlamaForCausalLM
 
 # using numpy extension: https://github.com/GreenWaves-Technologies/bfloat16
 # install the library with `pip install bfloat16`
-# from bfloat16 import bfloat16
+from bfloat16 import bfloat16
 
 def get_weight_data_type(data_type):
     if data_type == "fp32":
         return np.float32
     elif data_type == "fp16":
         return np.float16
-    # elif data_type == "bf16":
-    #     return bfloat16
+    elif data_type == "bf16":
+        return bfloat16
     else:
         assert False, f"Invalid weight data type {data_type}"
 
@@ -73,23 +72,20 @@ def split_and_convert(args):
 
     # load position_embedding from rank 0
     # model = torch.load(ckpt_name)
-    # model = LlamaForCausalLM.from_pretrained(args.in_file)
-    model = torch.load(args.in_file, map_location=torch.device('cpu'))
-    print(dir(model))
-    # hf_config = vars(model.config)
-    hf_config = AutoConfig.from_pretrained('/Users/zhwang/models/llama-2-70b-chat-hf/')
-    hf_config = vars(hf_config)
+    model = LlamaForCausalLM.from_pretrained(args.in_file)
+    hf_config = vars(model.config)
     print(f"hf_config: {hf_config}")
 
     print("named parameters:")
-    #for name, param in model.named_parameters():
-    for name, param in model.items():
+    for name, param in model.named_parameters():
         print(f"- {name}")
 
     hidden_size = hf_config["hidden_size"]
     head_num = hf_config["num_attention_heads"]
+    kv_head_num = hf_config["num_key_value_heads"]
     head_size = hidden_size // head_num
     num_layers = hf_config["num_hidden_layers"]
+
 
     np_weight_data_type = get_weight_data_type(args.weight_data_type)
 
@@ -99,7 +95,7 @@ def split_and_convert(args):
         config['llama'] = {}
         config['llama']['model_name'] = model_name
         config['llama']["head_num"] = str(head_num)
-        config['llama']["kv_head_num"] = str(head_num)
+        config['llama']["kv_head_num"] = str(kv_head_num)
         config['llama']["size_per_head"] = str(head_size)
         config['llama']["inter_size"] = str(hf_config["intermediate_size"])
         config['llama']["num_layer"] = str(num_layers)
@@ -133,18 +129,16 @@ def split_and_convert(args):
         # first merge QKV into a single weight
         # concat direct to FT shape: [hidden_size, 3, head_num, head_size]
         # copied from huggingface_gptj_ckpt_convert.py
-        print(model[f'model.layers.{l}.self_attn.q_proj.weight'].shape)
-        print(model[f'model.layers.{l}.self_attn.k_proj.weight'].shape)
-        print(model[f'model.layers.{l}.self_attn.v_proj.weight'].shape)
         # qkv_weights = np.stack([
-        #     param_to_weights(model[f'model.layers.{l}.self_attn.q_proj.weight']),
-        #     param_to_weights(model[f'model.layers.{l}.self_attn.k_proj.weight']),
-        #     param_to_weights(model[f'model.layers.{l}.self_attn.v_proj.weight']),
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight']),
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight']),
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight']),
         # ])
+        # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
         qkv_weights = np.concatenate((
-            param_to_weights(model[f'model.layers.{l}.self_attn.q_proj.weight']),
-            param_to_weights(model[f'model.layers.{l}.self_attn.k_proj.weight']),
-            param_to_weights(model[f'model.layers.{l}.self_attn.v_proj.weight']),
+            param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight']),
+            param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight']),
+            param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight']),
         ), axis=0)
         print(qkv_weights.shape)
         # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
@@ -153,29 +147,29 @@ def split_and_convert(args):
         split_and_convert_process(saved_dir, factor, qkv_weights_base_name, qkv_weights)
 
         # attention dense
-        o_weight = param_to_weights(model[f'model.layers.{l}.self_attn.o_proj.weight']).T
+        o_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.o_proj.weight']).T
         o_weight_base_name = f'model.layers.{l}.attention.dense.weight'
         split_and_convert_process(saved_dir, factor, o_weight_base_name, o_weight)
 
         # MLP
-        mlp_down_weight = param_to_weights(model[f'model.layers.{l}.mlp.down_proj.weight']).T
+        mlp_down_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.down_proj.weight']).T
         mlp_down_base_name = f'model.layers.{l}.mlp.down_proj.weight'
         split_and_convert_process(saved_dir, factor, mlp_down_base_name, mlp_down_weight)
 
-        mlp_gate_weight = param_to_weights(model[f'model.layers.{l}.mlp.gate_proj.weight']).T
+        mlp_gate_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.gate_proj.weight']).T
         mlp_gate_base_name = f'model.layers.{l}.mlp.gate_proj.weight'
         split_and_convert_process(saved_dir, factor, mlp_gate_base_name, mlp_gate_weight)
 
-        mlp_up_weight = param_to_weights(model[f'model.layers.{l}.mlp.up_proj.weight']).T
+        mlp_up_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.up_proj.weight']).T
         mlp_up_base_name = f'model.layers.{l}.mlp.up_proj.weight'
         split_and_convert_process(saved_dir, factor, mlp_up_base_name, mlp_up_weight)
 
         # LayerNorm
-        input_ln_weight = param_to_weights(model[f'model.layers.{l}.input_layernorm.weight'])
+        input_ln_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.input_layernorm.weight'])
         input_ln_base_name = f'model.layers.{l}.input_layernorm.weight'
         split_and_convert_process(saved_dir, factor, input_ln_base_name, input_ln_weight)
 
-        post_attn_ln_weight = param_to_weights(model[f'model.layers.{l}.post_attention_layernorm.weight'])
+        post_attn_ln_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.post_attention_layernorm.weight'])
         post_attn_ln_base_name = f'model.layers.{l}.post_attention_layernorm.weight'
         split_and_convert_process(saved_dir, factor, post_attn_ln_base_name, post_attn_ln_weight)
 
@@ -183,8 +177,7 @@ def split_and_convert(args):
 
 
     # final common weights
-    # for name, param in model.named_parameters():
-    for name, param in model.items():
+    for name, param in model.named_parameters():
         if name == 'model.embed_tokens.weight':
             param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.wte.weight.bin")
         elif name == 'model.norm.weight':
