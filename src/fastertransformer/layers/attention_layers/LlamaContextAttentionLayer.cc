@@ -148,21 +148,21 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             int n = m;
             int k = 2;
             int st = m*k;
-            float* A = new float[st];
-            float* B = new float[st];
-            float* C = new float[m*n];
+            T* A = new T[st];
+            T* B = new T[st];
+            T* C = new T[m*n];
 
             for (int i=0; i<st; i++) {
-                A[i] = float(i);
-                B[i] = float(i+st);
+                A[i] = T(i);
+                B[i] = T(i+st);
                 printf("%f %f\n", A[i], B[i]);
             }
-            float* a_buf = nullptr;
-            a_buf = (float*)allocator_->reMalloc(a_buf, sizeof(float)*st, true);
-            float* b_buf = nullptr;
-            b_buf = (float*)allocator_->reMalloc(b_buf, sizeof(float)*st, true);
-            float* c_buf = nullptr;
-            c_buf = (float*)allocator_->reMalloc(c_buf, sizeof(float)*m*n, true);
+            T* a_buf = nullptr;
+            a_buf = (T*)allocator_->reMalloc(a_buf, sizeof(T)*st, true);
+            T* b_buf = nullptr;
+            b_buf = (T*)allocator_->reMalloc(b_buf, sizeof(T)*st, true);
+            T* c_buf = nullptr;
+            c_buf = (T*)allocator_->reMalloc(c_buf, sizeof(T)*m*n, true);
 
             cudaMemcpy(a_buf, A, sizeof(float)*st, cudaMemcpyHostToDevice);
             cudaMemcpy(b_buf, B, sizeof(float)*st, cudaMemcpyHostToDevice);
@@ -180,21 +180,21 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                         m /* n */);
             sync_check_cuda_error();
             printf("cudaMemcpy\n");
-            cudaMemcpy(C, a_buf, sizeof(float) * m * k, cudaMemcpyDeviceToHost);
+            cudaMemcpy(C, a_buf, sizeof(T) * m * k, cudaMemcpyDeviceToHost);
             sync_check_cuda_error();
             for (int i=0; i<m*n; i++) {
                 printf("%f ", C[i]);
             }
             printf("\n");
             printf("cudaMemcpy\n");
-            cudaMemcpy(C, b_buf, sizeof(float) * m * k, cudaMemcpyDeviceToHost);
+            cudaMemcpy(C, b_buf, sizeof(T) * m * k, cudaMemcpyDeviceToHost);
             sync_check_cuda_error();
             for (int i=0; i<m*n; i++) {
                 printf("%f ", C[i]);
             }
             printf("\n");
             printf("cudaMemcpy\n");
-            cudaMemcpy(C, c_buf, sizeof(float) * m * n, cudaMemcpyDeviceToHost);
+            cudaMemcpy(C, c_buf, sizeof(T) * m * n, cudaMemcpyDeviceToHost);
             sync_check_cuda_error();
             for (int i=0; i<m*n; i++) {
                 printf("%f ", C[i]);
