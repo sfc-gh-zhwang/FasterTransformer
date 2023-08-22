@@ -156,6 +156,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             int qkv_size = (head_num+2*kv_head_num) * size_per_head;
             for (int t=0; t < token_num; t++) {
                 for (int i=0; i < qkv_size; i++) {
+                    printf("%d\n", t*qkv_size+i);
                     if (i < head_num * size_per_head) {
                         src[t*qkv_size+i] = 1.f;
                     }
