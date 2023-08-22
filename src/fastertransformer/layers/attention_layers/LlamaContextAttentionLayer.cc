@@ -160,7 +160,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                         src[t*qkv_size+i] = 1.f;
                     }
                     else if (i - head_num * size_per_head < kv_head_num * size_per_head) {
-                        src[t*qkv_size+i] = 2.f
+                        src[t*qkv_size+i] = 2.f;
                     } else {
                         src[t*qkv_size+i] = 3.f;
                     }
