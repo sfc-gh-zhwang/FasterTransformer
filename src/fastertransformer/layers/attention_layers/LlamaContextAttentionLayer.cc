@@ -148,14 +148,14 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             int n = m;
             int k = 2;
             int st = m*k;
-            T* A = new T[st];
-            T* B = new T[st];
-            T* C = new T[m*n];
+            float* A = new float[st];
+            float* B = new float[st];
+            float* C = new float[m*n];
             int t = 0;
             for (int i=0; i<st; i++) {
-                A[i] = static_cast<T>(float(i));
+                A[i] = static_cast<float>(float(i));
                 t = i+st;
-                B[i] = static_cast<T>(float(t));
+                B[i] = static_cast<float>(float(t));
                 printf("%f %f\n", (float)A[i], (float)B[i]);
             }
             T* a_buf = nullptr;
@@ -181,21 +181,21 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                         m /* n */);
             sync_check_cuda_error();
             printf("cudaMemcpy\n");
-            cudaMemcpy(C, a_buf, sizeof(T) * m * k, cudaMemcpyDeviceToHost);
+            cudaMemcpy(C, a_buf, sizeof(float) * m * k, cudaMemcpyDeviceToHost);
             sync_check_cuda_error();
             for (int i=0; i<m*n; i++) {
                 printf("%f ", (float)C[i]);
             }
             printf("\n");
             printf("cudaMemcpy\n");
-            cudaMemcpy(C, b_buf, sizeof(T) * m * k, cudaMemcpyDeviceToHost);
+            cudaMemcpy(C, b_buf, sizeof(float) * m * k, cudaMemcpyDeviceToHost);
             sync_check_cuda_error();
             for (int i=0; i<m*n; i++) {
                 printf("%f ", (float)C[i]);
             }
             printf("\n");
             printf("cudaMemcpy\n");
-            cudaMemcpy(C, c_buf, sizeof(T) * m * n, cudaMemcpyDeviceToHost);
+            cudaMemcpy(C, c_buf, sizeof(float) * m * n, cudaMemcpyDeviceToHost);
             sync_check_cuda_error();
             for (int i=0; i<m*n; i++) {
                 printf("%f ", (float)C[i]);
