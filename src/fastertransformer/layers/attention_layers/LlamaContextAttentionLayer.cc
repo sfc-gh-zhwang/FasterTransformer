@@ -128,18 +128,30 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                                   true);
     }
     else {
-        printf("cublas_wrapper_->Gemm\n");
+        printf("cublas_wrapper_->Gemm: %d\n", local_hidden_units_);
+        size_t qkv_size = local_hidden_units_ + 2 * local_kv_head_num_ * size_per_head_;
         cublas_wrapper_->Gemm(CUBLAS_OP_N,
                               CUBLAS_OP_N,
-                              3 * local_hidden_units_,  // n
+                              qkv_size,  // n
                               m,
                               hidden_units_,  // k
                               attention_weights->query_weight.kernel,
-                              3 * local_hidden_units_,  // n
+                              qkv_size,  // n
                               attention_input,
                               hidden_units_,  // k
                               qkv_buf_,
-                              3 * local_hidden_units_ /* n */);
+                              qkv_size /* n */);
+        // cublas_wrapper_->Gemm(CUBLAS_OP_N,
+        //                       CUBLAS_OP_N,
+        //                       3 * local_hidden_units_,  // n
+        //                       m,
+        //                       hidden_units_,  // k
+        //                       attention_weights->query_weight.kernel,
+        //                       3 * local_hidden_units_,  // n
+        //                       attention_input,
+        //                       hidden_units_,  // k
+        //                       qkv_buf_,
+        //                       3 * local_hidden_units_ /* n */);
     }
 
     sync_check_cuda_error();
