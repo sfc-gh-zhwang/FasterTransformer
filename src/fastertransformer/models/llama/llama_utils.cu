@@ -34,8 +34,8 @@ __global__ void repeat_kv(T* dst, const T* src, const int head_num, const int kv
 {
     for (int id = blockIdx.x * blockDim.x + threadIdx.x; id < kv_head_num * token_num * size_per_head; id += blockDim.x * gridDim.x) {
         int token_id = id % token_num;
-        int 
-        out[id] = (out[id] + (T)ldg(&bias[id % n])) * scale;
+        // int 
+        // out[id] = (out[id] + (T)ldg(&bias[id % n])) * scale;
     }
 }
 
