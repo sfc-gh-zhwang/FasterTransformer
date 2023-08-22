@@ -45,12 +45,12 @@ void invokeRepeatKv(T* dst, const T* src, const int head_num, const int kv_head_
     dim3      block, grid;
     const int n = kv_head_num * token_num;
     if (n <= 1024) {
-        block.x = n / 4 / data_type_factor;
+        block.x = n;
         grid.x  = size_per_head;
     }
     else {
         block.x = 1024;
-        grid.x  = ceil(m * n / 1024.);
+        grid.x  = ceil(size_per_head * n / 1024.);
     }
     repeat_kv<T><<<grid, block, 0, stream>>>(out, bias, scale, m, n / data_type_factor);
 }
