@@ -150,7 +150,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             const int size_per_head = 2;
             const int token_num = 5;
             const int qkv_size = (head_num+2*kv_head_num) * size_per_head;
-            const int dst_size = head_num * size_per_head * token_num;
+            const int dst_size = 3 * head_num * size_per_head * token_num;
             const int src_size = qkv_size * size_per_head * token_num;
             float * dst = new float[dst_size];
             float * src = new float[src_size];
