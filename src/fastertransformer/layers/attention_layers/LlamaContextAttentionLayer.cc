@@ -155,7 +155,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
     }
 
     sync_check_cuda_error();
-
+    printf("cublas_wrapper_->Gemm: done\n");
     // IDEA: append prefix prompt key value here
     PrefixPromptBatchWeightsParam<T> param{d_prefix_prompt_batch,
                                            d_prefix_prompt_lengths,
