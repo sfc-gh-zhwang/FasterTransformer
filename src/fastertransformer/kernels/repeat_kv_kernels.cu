@@ -33,6 +33,9 @@ template<typename T>
 __global__ void repeat_kv(T* dst, const T* src, const int kv_head_num, const int repeat_num, const int size_per_head, const int token_num)
 {
     for (int id = blockIdx.x * blockDim.x + threadIdx.x; id < kv_head_num * token_num * size_per_head; id += blockDim.x * gridDim.x) {
+        if (id != 0) {
+            continue;
+        }
         int token_id = id / (size_per_head * kv_head_num);
         int head_id = id / size_per_head % kv_head_num;
         int inner_id = id % size_per_head;
