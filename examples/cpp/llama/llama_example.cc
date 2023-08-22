@@ -105,7 +105,7 @@ void llama_example(const INIReader reader)
     const float  len_penalty                = reader.GetFloat("request", "len_penalty");
     const float  beam_search_diversity_rate = reader.GetFloat("request", "beam_search_diversity_rate");
     const int    min_length                 = reader.GetInteger("request", "min_length", 0);
-    const size_t request_batch_size         = 1; // reader.GetInteger("request", "request_batch_size");
+    const size_t request_batch_size         = reader.GetInteger("request", "request_batch_size");
     // The length of tokens we hope this model to generate
     const int request_output_len = reader.GetInteger("request", "request_output_len");
 
