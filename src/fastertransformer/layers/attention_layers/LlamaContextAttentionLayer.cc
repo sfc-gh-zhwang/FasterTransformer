@@ -153,8 +153,8 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             float* C = new float[m*n];
 
             for (int i=0; i<st; i++) {
-                A[i] = i;
-                B[i] = i+st;
+                A[i] = float(i);
+                B[i] = float(i+st);
                 printf("%f %f\n", A[i], B[i]);
             }
             float* a_buf = nullptr;
@@ -181,6 +181,9 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             sync_check_cuda_error();
             cudaMemcpy(C, c_buf, sizeof(float) * m * n, cudaMemcpyDeviceToHost);
             sync_check_cuda_error();
+            for (int i=0; i<m*n; i++) {
+                printf("%f ", C[i]);
+            }
             for (int i=0; i<m; i++) {
                 for (int j=0; j<n; j++) {
                     printf("%f ", C[i*n+j]);
