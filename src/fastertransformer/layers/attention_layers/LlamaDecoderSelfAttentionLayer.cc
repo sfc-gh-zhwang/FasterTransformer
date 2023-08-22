@@ -593,17 +593,18 @@ void LlamaDecoderSelfAttentionLayer<T>::forward(TensorMap*                output
                                       true);
         }
         else {
+            size_t local_qkv_size = local_hidden_units_ + 2 * local_kv_head_num_ * size_per_head_;
             cublas_wrapper_->Gemm(CUBLAS_OP_N,
                                   CUBLAS_OP_N,
-                                  3 * local_hidden_units_,  // n
+                                  local_qkv_size,  // n
                                   batch_size,
                                   d_model_,  // k
                                   attention_weights->query_weight.kernel,
-                                  3 * local_hidden_units_,  // n
+                                  local_qkv_size,  // n
                                   attention_input,
                                   d_model_,  // k
                                   qkv_buf_tmp_,
-                                  3 * local_hidden_units_ /* n */);
+                                  local_qkv_size /* n */);
             invokeRepeatKv(qkv_buf_,
                            qkv_buf_tmp_,
                            local_head_num_,
