@@ -84,7 +84,7 @@ def split_and_convert(args):
     head_num = hf_config["num_attention_heads"]
     head_size = hidden_size // head_num
     num_layers = hf_config["num_hidden_layers"]
-    # num_layers = 3
+    num_layers = 3
 
     np_weight_data_type = get_weight_data_type(args.weight_data_type)
 
