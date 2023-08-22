@@ -18,6 +18,7 @@
 #include "src/fastertransformer/kernels/decoder_masked_multihead_attention.h"
 #include "src/fastertransformer/utils/logger.h"
 #include "src/fastertransformer/utils/memory_utils.h"
+#include "src/fastertransformer/kernels/repeat_kv_kernels.h"
 #include "src/fastertransformer/utils/nvtx_utils.h"
 
 namespace fastertransformer {
@@ -229,6 +230,7 @@ void LlamaDecoderSelfAttentionLayer<T>::freeBuffer()
 {
     if (is_allocate_buffer_) {
         allocator_->free((void**)(&qkv_buf_));
+        allocator_->free((void**)(&qkv_buf_tmp_));
         allocator_->free((void**)(&context_buf_));
         is_allocate_buffer_ = false;
 
@@ -600,8 +602,15 @@ void LlamaDecoderSelfAttentionLayer<T>::forward(TensorMap*                output
                                   3 * local_hidden_units_,  // n
                                   attention_input,
                                   d_model_,  // k
-                                  qkv_buf_,
+                                  qkv_buf_tmp_,
                                   3 * local_hidden_units_ /* n */);
+            invokeRepeatKv(qkv_buf_,
+                           qkv_buf_tmp_,
+                           local_head_num_,
+                           local_kv_head_num_,
+                           size_per_head_,
+                           batch_size,
+                           stream_);
         }
     }
     sync_check_cuda_error();

@@ -145,8 +145,8 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                               local_qkv_size /* n */);
         invokeRepeatKv(qkv_buf_,
                        qkv_buf_tmp_,
-                       head_num_,
-                       kv_head_num_,
+                       local_head_num_,
+                       local_kv_head_num_,
                        size_per_head_,
                        m,
                        stream_);
