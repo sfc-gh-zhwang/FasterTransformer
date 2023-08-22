@@ -155,6 +155,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             for (int i=0; i<st; i++) {
                 A[i] = i;
                 B[i] = i+st;
+                printf("%f %f\n", A[i], B[i])
             }
             float* a_buf = nullptr;
             a_buf = (float*)allocator_->reMalloc(a_buf, sizeof(float)*st, true);
