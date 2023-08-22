@@ -148,7 +148,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
         qkv_buf = new T[st];
         for (int i=0; i<st; i++) {
             qkv_buf[i] = i;
-            printf("%f ", qkv_buf[i]);
+            printf("%f ", double(qkv_buf[i]));
             if (i % 500 == 499 ) {
                 printf("\n");
             }
@@ -156,7 +156,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
         cudaMemcpy(qkv_buf, attention_weights->query_weight.kernel, sizeof(T) * st, cudaMemcpyDeviceToHost);
         printf("cudaMemcpy\n");
         for (int i=0; i<st; i++) {
-            printf("%f ", qkv_buf[i]);
+            printf("%f ", double(qkv_buf[i]));
             if (i % 500 == 499 ) {
                 printf("\n");
             }
