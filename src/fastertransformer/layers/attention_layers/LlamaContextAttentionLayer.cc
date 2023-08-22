@@ -143,7 +143,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                               qkv_buf_tmp_,
                               local_qkv_size /* n */);
         {
-            printf("test\n")
+            printf("test\n");
             int m = 3;
             int n = m;
             int k = 2;
