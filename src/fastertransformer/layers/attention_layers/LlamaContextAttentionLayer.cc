@@ -159,11 +159,11 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                 printf("%f %f\n", (float)A[i], (float)B[i]);
             }
             T* a_buf = nullptr;
-            a_buf = (T*)allocator_->reMalloc(a_buf, sizeof(T)*st, true);
+            a_buf = (T*)allocator_->reMalloc(a_buf, sizeof(float)*st, true);
             T* b_buf = nullptr;
-            b_buf = (T*)allocator_->reMalloc(b_buf, sizeof(T)*st, true);
+            b_buf = (T*)allocator_->reMalloc(b_buf, sizeof(float)*st, true);
             T* c_buf = nullptr;
-            c_buf = (T*)allocator_->reMalloc(c_buf, sizeof(T)*m*n, true);
+            c_buf = (T*)allocator_->reMalloc(c_buf, sizeof(float)*m*n, true);
 
             cudaMemcpy(a_buf, A, sizeof(float)*st, cudaMemcpyHostToDevice);
             cudaMemcpy(b_buf, B, sizeof(float)*st, cudaMemcpyHostToDevice);
