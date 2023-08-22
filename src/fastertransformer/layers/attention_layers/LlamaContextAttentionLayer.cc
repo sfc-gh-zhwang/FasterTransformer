@@ -168,9 +168,9 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
             }
 
             float* dst_buf = nullptr;
-            dst_buf = (half*)allocator_->reMalloc(dst_buf, sizeof(float)*dst_size, true);
+            dst_buf = (float*)allocator_->reMalloc(dst_buf, sizeof(float)*dst_size, true);
             float* src_buf = nullptr;
-            src_buf = (half*)allocator_->reMalloc(src_buf, sizeof(float)*src_size, true);
+            src_buf = (float*)allocator_->reMalloc(src_buf, sizeof(float)*src_size, true);
 
             cudaMemcpy(src_buf, src, sizeof(float)*src_size, cudaMemcpyHostToDevice);
 
