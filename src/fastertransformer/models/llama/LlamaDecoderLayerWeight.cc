@@ -202,7 +202,7 @@ void LlamaDecoderLayerWeight<T>::loadModel(std::string dir_path, FtCudaDataType 
 
     int qkv_size = hidden_units_ + 2 * size_per_head_ * kv_head_num_;
 
-    // deviceFill(weights_ptr[3], (size_t)(3 * hidden_units_ / tensor_para_size_), (T)0.0);
+    deviceFill(weights_ptr[3], (size_t)(3 * hidden_units_ / tensor_para_size_), (T)0.0);
 
     if (!use_gptj_residual_) {
         deviceFill(weights_ptr[5], (size_t)hidden_units_, (T)0.0);
@@ -347,7 +347,7 @@ void LlamaDecoderLayerWeight<T>::mallocWeights()
     deviceMalloc(&weights_ptr[1], hidden_units_); // pre layernorm gamma
     // deviceMalloc(&weights_ptr[2], hidden_units_ * 3 * hidden_units_ / tensor_para_size_); // qkv kernel
     int qkv_size = hidden_units_ + 2 * size_per_head_ * kv_head_num_;
-    deviceMalloc(&weights_ptr[3], qkv_size / tensor_para_size_); // qkv bias
+    deviceMalloc(&weights_ptr[3], 3 * hidden_units_ / tensor_para_size_); // qkv bias
     // deviceMalloc(&weights_ptr[4], hidden_units_ / tensor_para_size_ * hidden_units_); // attention output weight
     if (!use_gptj_residual_) {
         deviceMalloc(&weights_ptr[5], hidden_units_); // attention output bias
