@@ -336,6 +336,7 @@ Llama<T>::Llama(size_t                              head_num,
                 float                               shared_contexts_ratio):
     BaseLayer(stream, cublas_wrapper, allocator, is_free_buffer_after_forward, cuda_device_prop),
     head_num_(head_num),
+    kv_head_num_(kv_head_num),
     size_per_head_(size_per_head),
     inter_size_(inter_size),
     num_layer_(num_layer),
