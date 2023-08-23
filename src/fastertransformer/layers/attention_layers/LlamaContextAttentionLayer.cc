@@ -71,7 +71,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
     FT_CHECK_WITH_INFO(attention_type != AttentionType::FUSED_PADDED_MHA,
                        "Llama Context FUSED_PADDED_MHA is not supported !");
 
-    printf("attention buffer alloc\n");
+    printf("attention buffer alloc %d %d\n", request_batch_size, request_seq_len + max_prompt_length);
     PUSH_RANGE("attention buffer alloc");
     allocateBuffer(request_batch_size, request_seq_len + max_prompt_length, attention_type != AttentionType::FUSED_MHA);
     POP_RANGE;
