@@ -574,7 +574,7 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
                 if (l == 0) {
                     printf("%d %d: %d %d\n", l, ite, h_token_num, hidden_units_);
                     T *self_attn_output = new T[h_token_num * hidden_units_];
-                    cudaMemcpy(self_attn_output, decoder_output, sizeof(T)*h_token_num * hidden_units_, cudaMemcpyDeviceToHost);
+                    cudaMemcpy(self_attn_output, layer_output, sizeof(T)*h_token_num * hidden_units_, cudaMemcpyDeviceToHost);
                     sync_check_cuda_error();
                     int k = 0;
                     for (int i=0; i<h_token_num; i++) {
