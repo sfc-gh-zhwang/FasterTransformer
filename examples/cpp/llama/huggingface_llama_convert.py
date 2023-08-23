@@ -18,19 +18,19 @@ import numpy as np
 from pathlib import Path
 
 import os
-from transformers import LlamaForCausalLM
+from transformers import LlamaForCausalLM, AutoConfig
 
 # using numpy extension: https://github.com/GreenWaves-Technologies/bfloat16
 # install the library with `pip install bfloat16`
-from bfloat16 import bfloat16
+# from bfloat16 import bfloat16
 
 def get_weight_data_type(data_type):
     if data_type == "fp32":
         return np.float32
     elif data_type == "fp16":
         return np.float16
-    elif data_type == "bf16":
-        return bfloat16
+    # elif data_type == "bf16":
+    #     return bfloat16
     else:
         assert False, f"Invalid weight data type {data_type}"
 
