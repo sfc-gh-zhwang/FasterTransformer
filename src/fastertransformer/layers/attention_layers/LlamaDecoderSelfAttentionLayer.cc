@@ -482,6 +482,7 @@ template<typename T>
 LlamaDecoderSelfAttentionLayer<T>::~LlamaDecoderSelfAttentionLayer()
 {
     cublas_wrapper_ = nullptr;
+    printf("LlamaDecoderSelfAttentionLayer freebuffer\n");
     freeBuffer();
 }
 

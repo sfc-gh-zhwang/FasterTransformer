@@ -696,6 +696,7 @@ template<typename T>
 LlamaContextAttentionLayer<T>::~LlamaContextAttentionLayer()
 {
     cublas_wrapper_ = nullptr;
+    printf("LlamaContextAttentionLayer freebuffer\n");
     freeBuffer();
 }
 
