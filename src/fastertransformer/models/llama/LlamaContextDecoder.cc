@@ -459,6 +459,21 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
                                            &self_attention_input_tensors,
                                            &gpt_decoder_layer_weight->at(l)->self_attention_weights);
 
+            {
+                printf("%d %d\n", h_token_num, hidden_units_)
+                T *self_attn_output = new T[h_token_num * hidden_units_];
+                self_attn_output_
+                cudaMemcpy(self_attn_output, self_attn_output_, sizeof(float)*h_token_num * hidden_units_, cudaMemcpyDeviceToHost);
+                int k = 0;
+                for (int i=0; i<h_token_num; i++) {
+                    for (int j=0; j<hidden_units_; j++) {
+                        printf("%f ", self_attn_output[k++]);
+                    }
+                }
+                delete self_attn_output;
+
+            }
+
             if (use_shared_contexts) {
                 // Even with local batches, we must process the whole K/V caches as any
                 // element in batch_idx_to_compact_idx may reference the local batch
