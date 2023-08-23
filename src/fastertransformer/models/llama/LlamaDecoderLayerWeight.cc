@@ -235,6 +235,7 @@ void LlamaDecoderLayerWeight<T>::loadModel(std::string dir_path, FtCudaDataType 
                          {(size_t)hidden_units_, (size_t)(qkv_size / tensor_para_size_)},
                          dir_path + ".attention.query_key_value.weight." + rank_spec + ".bin",
                          model_file_type);
+        printf("qkv_size: %d\n", qkv_size);
 
         loadWeightFromBin<T>(weights_ptr[4],
                          {(size_t)(hidden_units_ / tensor_para_size_), (size_t)hidden_units_},
