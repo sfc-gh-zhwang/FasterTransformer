@@ -279,6 +279,7 @@ void llama_example(const INIReader reader)
     }
 
     const bool                          use_gptj_residual = false;
+    printf("kv_head_num: %d\n", kv_head_num);
     fastertransformer::LlamaWeight<T> gpt_weights(head_num,
                                                   kv_head_num,
                                                   size_per_head,
