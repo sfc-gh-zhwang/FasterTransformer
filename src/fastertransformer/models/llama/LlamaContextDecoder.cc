@@ -459,7 +459,7 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
                                            &self_attention_input_tensors,
                                            &gpt_decoder_layer_weight->at(l)->self_attention_weights);
 
-            {
+            if (l == 0) {
                 printf("%d %d\n", h_token_num, hidden_units_);
                 T *self_attn_output = new T[h_token_num * hidden_units_];
                 cudaMemcpy(self_attn_output, self_attn_output_, sizeof(float)*h_token_num * hidden_units_, cudaMemcpyDeviceToHost);
