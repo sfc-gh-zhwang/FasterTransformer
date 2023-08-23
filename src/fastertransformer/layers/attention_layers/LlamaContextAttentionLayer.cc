@@ -76,7 +76,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
     allocateBuffer(request_batch_size, request_seq_len + max_prompt_length, attention_type != AttentionType::FUSED_MHA);
     POP_RANGE;
     sync_check_cuda_error();
-
+    printf("attention buffer alloc done\n");
     const bool is_final = input_tensors->at("is_final_layer").getVal<bool>();
 
     const int m = input_tensors->at("input_query").shape[0];
