@@ -17,6 +17,7 @@ import configparser
 import numpy as np
 from pathlib import Path
 
+import torch
 import os
 from transformers import LlamaForCausalLM, AutoConfig
 
@@ -74,11 +75,12 @@ def split_and_convert(args):
     # model = torch.load(ckpt_name)
     print(f'load model from {args.in_file}')
     config = AutoConfig.from_pretrained(args.in_file)
-    w = None
+    w = {}
     for f in os.listdir(args.in_file):
-        print(f)
+        if f.endswith('.bin'):
+            w.update(torch.load(os.path.join(args.in_file, f), map_location='cpu'))
 
-    model = LlamaForCausalLM.from_pretrained(args.in_file)
+    model = LlamaForCausalLM.from_pretrained(None, config=config, state_dict=w)
     hf_config = vars(model.config)
     print(f"hf_config: {hf_config}")
 
