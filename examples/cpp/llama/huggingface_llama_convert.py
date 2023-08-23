@@ -74,16 +74,27 @@ def split_and_convert(args):
     # load position_embedding from rank 0
     # model = torch.load(ckpt_name)
     print(f'load model from {args.in_file}')
-    model = LlamaForCausalLM.from_pretrained(args.in_file, device_map='auto')
-    # config = AutoConfig.from_pretrained(args.in_file)
-    # print(config)
-    # w = {}
-    # for f in os.listdir(args.in_file):
-    #     if f.endswith('.bin'):
-    #         w.update(torch.load(os.path.join(args.in_file, f), map_location='cpu'))
-    #         print(w.keys())
+    # model = LlamaForCausalLM.from_pretrained(args.in_file, device_map='auto')
+    num_layers = 3
+    config = AutoConfig.from_pretrained(args.in_file)
+    config.num_hidden_layers = num_layers
+    print(config)
+    state_dict = {}
+    for f in os.listdir(args.in_file):
+        if not f.endswith('.bin'):
+            continue
+        w = torch.load(os.path.join(args.in_file, f), map_location='cpu')
+        keys = list(w.keys())
+        for k in keys:
+            if 'model.layers.' not in k:
+                continue
+            l = int(k.split('.')[2])
+            if l < num_layers:
+                continue
+            del w[k]
+        state_dict.update(w)
 
-    # model = LlamaForCausalLM.from_pretrained(None, config=config, state_dict=w)
+    model = LlamaForCausalLM.from_pretrained(None, config=config, state_dict=state_dict)
     hf_config = vars(model.config)
     print(f"hf_config: {hf_config}")
 
@@ -95,7 +106,7 @@ def split_and_convert(args):
     head_num = hf_config["num_attention_heads"]
     kv_head_num = hf_config["num_key_value_heads"]
     head_size = hidden_size // head_num
-    num_layers = hf_config["num_hidden_layers"]
+    # num_layers = hf_config["num_hidden_layers"]
 
 
     np_weight_data_type = get_weight_data_type(args.weight_data_type)
