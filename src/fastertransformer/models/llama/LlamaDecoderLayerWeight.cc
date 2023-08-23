@@ -243,7 +243,7 @@ void LlamaDecoderLayerWeight<T>::loadModel(std::string dir_path, FtCudaDataType 
             cudaMemcpy(qkv_buf, weights_ptr[2], sizeof(T)*sz, cudaMemcpyDeviceToHost);
             sync_check_cuda_error();
             for (int i=0; i<sz; i++) {
-                printf("%f ", qkv_buf[i]);
+                printf("%f ", (float)qkv_buf[i]);
             }
             printf("\n");
             delete qkv_buf;
