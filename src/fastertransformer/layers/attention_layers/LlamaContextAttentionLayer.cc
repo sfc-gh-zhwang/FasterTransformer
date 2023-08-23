@@ -300,19 +300,19 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
         //                       3 * local_hidden_units_ /* n */);
     }
 
-    {
-        printf("qkv_buf_\n");
-        int sz = 100;
-        T *qkv_buf = new T[sz];
-        cudaMemcpy(qkv_buf, attention_weights->query_weight.kernel, sizeof(T)*sz, cudaMemcpyDeviceToHost);
-        sync_check_cuda_error();
-        for (int i=0; i<sz; i++) {
-            printf("%f ", qkv_buf[i]);
-        }
-        printf("\n");
-        delete qkv_buf;
+    // {
+    //     printf("qkv_buf_\n");
+    //     int sz = 100;
+    //     T *qkv_buf = new T[sz];
+    //     cudaMemcpy(qkv_buf, attention_weights->query_weight.kernel, sizeof(T)*sz, cudaMemcpyDeviceToHost);
+    //     sync_check_cuda_error();
+    //     for (int i=0; i<sz; i++) {
+    //         printf("%f ", qkv_buf[i]);
+    //     }
+    //     printf("\n");
+    //     delete qkv_buf;
 
-    }
+    // }
     sync_check_cuda_error();
     printf("cublas_wrapper_->Gemm: done\n");
     // IDEA: append prefix prompt key value here
