@@ -75,6 +75,7 @@ def split_and_convert(args):
     # model = torch.load(ckpt_name)
     print(f'load model from {args.in_file}')
     config = AutoConfig.from_pretrained(args.in_file)
+    print(config)
     w = {}
     for f in os.listdir(args.in_file):
         if f.endswith('.bin'):
