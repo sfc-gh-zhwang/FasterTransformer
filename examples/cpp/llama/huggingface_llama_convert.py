@@ -75,7 +75,7 @@ def split_and_convert(args):
     # model = torch.load(ckpt_name)
     print(f'load model from {args.in_file}')
     # model = LlamaForCausalLM.from_pretrained(args.in_file, device_map='auto')
-    num_layers = 2
+    num_layers = 3
     config = AutoConfig.from_pretrained(args.in_file)
     config.num_hidden_layers = num_layers
     print(config)
