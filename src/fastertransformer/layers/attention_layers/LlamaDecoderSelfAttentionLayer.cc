@@ -231,7 +231,7 @@ void LlamaDecoderSelfAttentionLayer<T>::freeBuffer()
     printf("%x %x %x %x\n", qkv_buf_, qkv_buf_tmp_, context_buf_, mixed_gemm_workspace_);
     if (is_allocate_buffer_) {
         allocator_->free((void**)(&qkv_buf_));
-        allocator_->free((void**)(&qkv_buf_tmp_));
+        // allocator_->free((void**)(&qkv_buf_tmp_));
         allocator_->free((void**)(&context_buf_));
         is_allocate_buffer_ = false;
 
