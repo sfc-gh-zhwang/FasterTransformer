@@ -74,7 +74,7 @@ def split_and_convert(args):
     # load position_embedding from rank 0
     # model = torch.load(ckpt_name)
     print(f'load model from {args.in_file}')
-    model = LlamaForCausalLM.from_pretrained(args.in_file, device_map='cpu')
+    model = LlamaForCausalLM.from_pretrained(args.in_file, device_map='auto')
     # config = AutoConfig.from_pretrained(args.in_file)
     # print(config)
     # w = {}
