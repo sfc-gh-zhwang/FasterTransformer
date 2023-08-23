@@ -228,6 +228,7 @@ void LlamaDecoderSelfAttentionLayer<T>::allocateBuffer(size_t batch_size)
 template<typename T>
 void LlamaDecoderSelfAttentionLayer<T>::freeBuffer()
 {
+    printf("%d %d %d", qkv_buf_, qkv_buf_tmp_, context_buf_);
     if (is_allocate_buffer_) {
         allocator_->free((void**)(&qkv_buf_));
         allocator_->free((void**)(&qkv_buf_tmp_));
