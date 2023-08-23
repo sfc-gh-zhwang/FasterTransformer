@@ -476,7 +476,7 @@ void llama_example(const INIReader reader)
             delete[] hBuf;
         }
     }
-
+    return;
     // test time
     struct timeval start, end;
     mpi::barrier();
