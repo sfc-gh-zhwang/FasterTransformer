@@ -191,6 +191,7 @@ LlamaDecoderLayerWeight<T>& LlamaDecoderLayerWeight<T>::operator=(const LlamaDec
 template<typename T>
 void LlamaDecoderLayerWeight<T>::loadModel(std::string dir_path, FtCudaDataType model_file_type)
 {
+    printf("%s %d\n", dir_path, model_file_type);
     FT_CHECK(is_maintain_buffer == true);
     const std::string rank_spec = std::to_string(tensor_para_rank_);
 
