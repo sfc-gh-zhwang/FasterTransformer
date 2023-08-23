@@ -79,6 +79,7 @@ def split_and_convert(args):
     for f in os.listdir(args.in_file):
         if f.endswith('.bin'):
             w.update(torch.load(os.path.join(args.in_file, f), map_location='cpu'))
+            print(w.keys())
 
     model = LlamaForCausalLM.from_pretrained(None, config=config, state_dict=w)
     hf_config = vars(model.config)
