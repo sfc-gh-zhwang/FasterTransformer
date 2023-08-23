@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
         ini_name = std::string(argv[1]);
     }
     else {
-        ini_name = "/home/neeva/FasterTransformer/examples/cpp/llama/llama_config.ini";
+        ini_name = "/data/FasterTransformer/examples/cpp/llama/llama_config.ini";
     }
 
     INIReader reader = INIReader(ini_name);
