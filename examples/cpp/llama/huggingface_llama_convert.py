@@ -68,9 +68,9 @@ def split_and_convert(args):
     # model = torch.load(ckpt_name)
     print(f'load model from {args.in_file}')
     # model = LlamaForCausalLM.from_pretrained(args.in_file, device_map='auto')
-    num_layers = 3
     config = AutoConfig.from_pretrained(args.in_file)
-    config.num_hidden_layers = num_layers
+    # num_layers = 3
+    # config.num_hidden_layers = num_layers
     print(config)
     state_dict = {}
     for f in os.listdir(args.in_file):
@@ -82,7 +82,7 @@ def split_and_convert(args):
             if 'model.layers.' not in k:
                 continue
             l = int(k.split('.')[2])
-            if l < num_layers:
+            if l < config.num_hidden_layers:
                 continue
             del w[k]
         state_dict.update(w)
