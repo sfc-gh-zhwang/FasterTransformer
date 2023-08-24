@@ -36,7 +36,8 @@ void llama_example(const INIReader reader);
 
 int main(int argc, char* argv[])
 {
-    mpi::initialize(&argc, &argv);
+    MPICHECK(MPI_Init(&argc, &argv));
+    ft::mpi::initialize(&argc, &argv);
     srand(0);
 
     std::string ini_name;

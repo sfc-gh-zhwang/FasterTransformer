@@ -303,7 +303,7 @@ int main(int argc, char* argv[])
         by MPI or triton
     */
 
-    // MPICHECK(MPI_Init(&argc, &argv));
+    MPICHECK(MPI_Init(&argc, &argv));
     ft::mpi::initialize(&argc, &argv);
     int node_id  = ft::mpi::getCommWorldRank();
     int node_num = ft::mpi::getCommWorldSize();
