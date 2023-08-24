@@ -227,7 +227,6 @@ void LlamaDecoderSelfAttentionLayer<T>::allocateBuffer(size_t batch_size)
 template<typename T>
 void LlamaDecoderSelfAttentionLayer<T>::freeBuffer()
 {
-    printf("%x %x %x %x\n", qkv_buf_, qkv_buf_tmp_, context_buf_, mixed_gemm_workspace_);
     if (is_allocate_buffer_) {
         allocator_->free((void**)(&qkv_buf_));
         allocator_->free((void**)(&qkv_buf_tmp_));
@@ -482,7 +481,6 @@ template<typename T>
 LlamaDecoderSelfAttentionLayer<T>::~LlamaDecoderSelfAttentionLayer()
 {
     cublas_wrapper_ = nullptr;
-    printf("LlamaDecoderSelfAttentionLayer freebuffer\n");
     freeBuffer();
 }
 

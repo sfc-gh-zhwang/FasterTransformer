@@ -26,7 +26,6 @@ namespace fastertransformer {
 template<typename T>
 void LlamaContextDecoder<T>::initialize()
 {
-    printf("kv_head_num_: %d %d\n", head_num_, kv_head_num_);
     self_attention_layer_ = new TensorParallelLlamaContextAttentionLayer<T>(0,  // max_batch_size
                                                                           0,  // max_seq_len
                                                                           head_num_,
