@@ -399,10 +399,10 @@ int main(int argc, char* argv[])
                     if ((i + 1) % (seq_len) == 0)
                         outFile << std::endl;
 
-                    if (i < 10)
+                    // if (i < 10)
                         printf("%5d ", hBuf[i]);
-                    if ((i + 1) % (seq_len) == 0 && i < 10)
-                        std::cout << std::endl;
+                    // if ((i + 1) % (seq_len) == 0 && i < 10)
+                    //     std::cout << std::endl;
                 }
                 std::cout << std::endl << "zeroCount = " << zeroCount << std::endl;
             }
