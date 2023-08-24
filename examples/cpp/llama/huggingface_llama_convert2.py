@@ -122,7 +122,7 @@ def split_and_convert(args):
 
     def try_dump(key, cache, loaded, save_name, saved_dir, factor, transpose=True):
         weight = get_param(key, cache, loaded)
-        if weight is not None:
+        if weight is None:
             return
         if transpose:
             weight = weight.T
