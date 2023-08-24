@@ -122,7 +122,7 @@ void llama_example(const INIReader reader)
     // Prepare the parallelism parameters
     int rank       = mpi::getCommWorldRank();
     int world_size = mpi::getCommWorldSize();
-    world_size = 4;
+    // world_size = 4;
     if (rank == 0) {
         printf("Total ranks: %d.\n", world_size);
     }
