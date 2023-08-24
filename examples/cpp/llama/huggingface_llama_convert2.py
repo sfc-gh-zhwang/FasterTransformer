@@ -224,6 +224,7 @@ def split_and_convert(args):
                      saved_dir=saved_dir,
                      factor=factor,
                      transpose=False)
+        to_del = []
         for name, param in w.items():
             if name == 'model.embed_tokens.weight':
                 param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.wte.weight.bin")
@@ -231,17 +232,12 @@ def split_and_convert(args):
                 param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.final_layernorm.weight.bin")
             elif name == 'lm_head.weight':
                 param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.lm_head.weight.bin")
+            else:
+                continue
+            to_del.append(param)
+        for k in to_del:
+            del w[k]
         state_dict.update(w)
-
-
-    # final common weights
-    for name, param in model.named_parameters():
-        if name == 'model.embed_tokens.weight':
-            param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.wte.weight.bin")
-        elif name == 'model.norm.weight':
-            param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.final_layernorm.weight.bin")
-        elif name == 'lm_head.weight':
-            param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.lm_head.weight.bin")
 
 
 if __name__ == "__main__":
