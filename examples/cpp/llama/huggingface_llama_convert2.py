@@ -73,10 +73,6 @@ def split_and_convert(args):
     hf_config = vars(config)
     print(f"hf_config: {hf_config}")
 
-    print("named parameters:")
-    for name, param in model.named_parameters():
-        print(f"- {name}")
-
     hidden_size = hf_config["hidden_size"]
     head_num = hf_config["num_attention_heads"]
     kv_head_num = hf_config["num_key_value_heads"]
