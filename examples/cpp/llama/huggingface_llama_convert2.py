@@ -110,7 +110,7 @@ def split_and_convert(args):
         print(f"Fail to save the config in config.ini.")
         print(e)
 
-    param_to_weights = lambda param: param.detach().cpu().numpy().astype(np_weight_data_type)
+    param_to_weights = lambda param: param.detach().cpu().float().numpy().astype(np_weight_data_type)
 
     def get_param(key, cache, loaded):
         if key in cache:
@@ -227,11 +227,11 @@ def split_and_convert(args):
         to_del = []
         for name, param in w.items():
             if name == 'model.embed_tokens.weight':
-                param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.wte.weight.bin")
+                param.detach().cpu().float().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.wte.weight.bin")
             elif name == 'model.norm.weight':
-                param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.final_layernorm.weight.bin")
+                param.detach().cpu().float().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.final_layernorm.weight.bin")
             elif name == 'lm_head.weight':
-                param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.lm_head.weight.bin")
+                param.detach().cpu().float().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.lm_head.weight.bin")
             else:
                 continue
             to_del.append(param)
