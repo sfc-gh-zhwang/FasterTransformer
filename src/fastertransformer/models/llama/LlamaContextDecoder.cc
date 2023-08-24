@@ -580,7 +580,7 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
                     for (int i=0; i<h_token_num; i++) {
                         for (int j=0; j<hidden_units_; j++) {
                             if (i == 0) {
-                                printf("%f ", (float)self_attn_output[k]);
+                                printf("%f, ", (float)self_attn_output[k]);
                             }
                             k++;
                         }
