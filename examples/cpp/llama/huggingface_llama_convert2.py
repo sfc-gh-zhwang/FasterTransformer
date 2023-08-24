@@ -166,8 +166,6 @@ def split_and_convert(args):
                 v_proj = np.split(v_proj, factor, axis=0)
                 for j in range(factor):
                     qkv_weights = np.concatenate((q_proj[j], k_proj[j], v_proj[j]), axis=0)
-                    print(qkv_weights.shape)
-                    # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
                     qkv_weights = np.transpose(qkv_weights)
                     qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
                     saved_path = saved_dir + "/" + qkv_weights_base_name + ".%d.bin" % j
