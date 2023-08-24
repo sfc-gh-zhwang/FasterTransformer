@@ -21,17 +21,11 @@ import torch
 import os
 from transformers import LlamaForCausalLM, AutoConfig
 
-# using numpy extension: https://github.com/GreenWaves-Technologies/bfloat16
-# install the library with `pip install bfloat16`
-# from bfloat16 import bfloat16
-
 def get_weight_data_type(data_type):
     if data_type == "fp32":
         return np.float32
     elif data_type == "fp16":
         return np.float16
-    # elif data_type == "bf16":
-    #     return bfloat16
     else:
         assert False, f"Invalid weight data type {data_type}"
 
@@ -157,16 +151,30 @@ def split_and_convert(args):
         #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight']),
         # ])
         # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
-        qkv_weights = np.concatenate((
-            param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight']),
-            param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight']),
-            param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight']),
-        ), axis=0)
-        print(qkv_weights.shape)
-        # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
-        qkv_weights = np.transpose(qkv_weights)
-        qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
-        split_and_convert_process(saved_dir, factor, qkv_weights_base_name, qkv_weights)
+        q_proj = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight'])
+        k_proj = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight'])
+        v_proj = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight'])
+        q_proj = np.split(q_proj, factor, axis=0)
+        k_proj = np.split(k_proj, factor, axis=0)
+        v_proj = np.split(v_proj, factor, axis=0)
+        for j in range(factor):
+            qkv_weights = np.concatenate((q_proj[j], k_proj[j], v_proj[j]), axis=0)
+            print(qkv_weights.shape)
+            # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
+            qkv_weights = np.transpose(qkv_weights)
+            qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
+            saved_path = saved_dir + "/" + qkv_weights_base_name + ".%d.bin" % j
+            qkv_weights.tofile(saved_path)
+        # qkv_weights = np.concatenate((
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight']),
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight']),
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight']),
+        # ), axis=0)
+        # print(qkv_weights.shape)
+        # # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
+        # qkv_weights = np.transpose(qkv_weights)
+        # qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
+        # split_and_convert_process(saved_dir, factor, qkv_weights_base_name, qkv_weights)
 
         # attention dense
         o_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.o_proj.weight']).T
