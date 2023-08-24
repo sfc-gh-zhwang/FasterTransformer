@@ -161,7 +161,7 @@ def split_and_convert(args):
             k_proj = get_param(k_key, state_dict, w)
             v_proj = get_param(v_key, state_dict, w)
 
-            if q_proj and k_proj and v_proj:
+            if q_proj is not None and k_proj is not None and v_proj is not None:
                 q_proj = np.split(q_proj, factor, axis=0)
                 k_proj = np.split(k_proj, factor, axis=0)
                 v_proj = np.split(v_proj, factor, axis=0)
