@@ -113,9 +113,9 @@ def split_and_convert(args):
 
     def get_param(key, cache, loaded):
         if key in cache:
-            return cache[key]
+            return param_to_weights(cache[key])
         if key in loaded:
-            return loaded[key]
+            return param_to_weights(loaded[key])
         return None
 
     def clear_param(key, cache, loaded):
@@ -124,6 +124,14 @@ def split_and_convert(args):
         if key in loaded:
             del loaded[key]
 
+    def try_dump(key, cache, loaded, save_name, saved_dir, factor, transpose=True):
+        weight = get_param(key, cache, loaded)
+        if not weight:
+            return
+        if transpose:
+            weight = weight.T
+        split_and_convert_process(saved_dir, factor, save_name, weight)
+        clear_param(key, state_dict, w)
     # layer-wise weights, example:
     #   - model.layers.0.self_attn.q_proj.weight
     #   - model.layers.0.self_attn.k_proj.weight
@@ -158,9 +166,6 @@ def split_and_convert(args):
             v_proj = get_param(v_key, state_dict, w)
 
             if q_proj and k_proj and v_proj:
-                q_proj = param_to_weights(q_proj)
-                k_proj = param_to_weights(k_proj)
-                v_proj = param_to_weights(v_proj)
                 q_proj = np.split(q_proj, factor, axis=0)
                 k_proj = np.split(k_proj, factor, axis=0)
                 v_proj = np.split(v_proj, factor, axis=0)
@@ -175,36 +180,58 @@ def split_and_convert(args):
                 clear_param(q_key, state_dict, w)
                 clear_param(k_key, state_dict, w)
                 clear_param(v_key, state_dict, w)
-
+            
             # attention dense
-            o_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.o_proj.weight']).T
-            o_weight_base_name = f'model.layers.{l}.attention.dense.weight'
-            split_and_convert_process(saved_dir, factor, o_weight_base_name, o_weight)
-
+            try_dump(key=f'model.layers.{l}.self_attn.o_proj.weight',
+                     cache=state_dict,
+                     loaded=w,
+                     save_name=f'model.layers.{l}.attention.dense.weight',
+                     saved_dir=saved_dir,
+                     factor=factor)
+            
             # MLP
-            mlp_down_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.down_proj.weight']).T
-            mlp_down_base_name = f'model.layers.{l}.mlp.down_proj.weight'
-            split_and_convert_process(saved_dir, factor, mlp_down_base_name, mlp_down_weight)
-
-            mlp_gate_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.gate_proj.weight']).T
-            mlp_gate_base_name = f'model.layers.{l}.mlp.gate_proj.weight'
-            split_and_convert_process(saved_dir, factor, mlp_gate_base_name, mlp_gate_weight)
-
-            mlp_up_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.up_proj.weight']).T
-            mlp_up_base_name = f'model.layers.{l}.mlp.up_proj.weight'
-            split_and_convert_process(saved_dir, factor, mlp_up_base_name, mlp_up_weight)
+            try_dump(key=f'model.layers.{l}.mlp.down_proj.weight',
+                     cache=state_dict,
+                     loaded=w,
+                     save_name=f'model.layers.{l}.mlp.down_proj.weight',
+                     saved_dir=saved_dir,
+                     factor=factor)
+            try_dump(key=f'model.layers.{l}.mlp.gate_proj.weight',
+                     cache=state_dict,
+                     loaded=w,
+                     save_name=f'model.layers.{l}.mlp.gate_proj.weight',
+                     saved_dir=saved_dir,
+                     factor=factor)
+            try_dump(key=f'model.layers.{l}.mlp.up_proj.weight',
+                     cache=state_dict,
+                     loaded=w,
+                     save_name=f'model.layers.{l}.mlp.up_proj.weight',
+                     saved_dir=saved_dir,
+                     factor=factor)
 
             # LayerNorm
-            input_ln_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.input_layernorm.weight'])
-            input_ln_base_name = f'model.layers.{l}.input_layernorm.weight'
-            split_and_convert_process(saved_dir, factor, input_ln_base_name, input_ln_weight)
-
-            post_attn_ln_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.post_attention_layernorm.weight'])
-            post_attn_ln_base_name = f'model.layers.{l}.post_attention_layernorm.weight'
-            split_and_convert_process(saved_dir, factor, post_attn_ln_base_name, post_attn_ln_weight)
+            try_dump(key=f'model.layers.{l}.input_layernorm.weight',
+                     cache=state_dict,
+                     loaded=w,
+                     save_name=f'model.layers.{l}.input_layernorm.weight',
+                     saved_dir=saved_dir,
+                     factor=factor,
+                     transpose=False)
+            try_dump(key=f'model.layers.{l}.post_attention_layernorm.weight',
+                     cache=state_dict,
+                     loaded=w,
+                     save_name=f'model.layers.{l}.post_attention_layernorm.weight',
+                     saved_dir=saved_dir,
+                     factor=factor,
+                     transpose=False)
+        for name, param in w.items():
+            if name == 'model.embed_tokens.weight':
+                param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.wte.weight.bin")
+            elif name == 'model.norm.weight':
+                param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.final_layernorm.weight.bin")
+            elif name == 'lm_head.weight':
+                param.detach().cpu().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.lm_head.weight.bin")
         state_dict.update(w)
-
-        print(f"done layer {l}")
 
 
     # final common weights
