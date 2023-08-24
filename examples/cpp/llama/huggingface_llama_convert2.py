@@ -77,17 +77,10 @@ def split_and_convert(args):
         if not f.endswith('.bin'):
             continue
         w = torch.load(os.path.join(args.in_file, f), map_location='cpu')
-        keys = list(w.keys())
-        for k in keys:
-            if 'model.layers.' not in k:
-                continue
-            l = int(k.split('.')[2])
-            if l < config.num_hidden_layers:
-                continue
-            del w[k]
         state_dict.update(w)
 
     model = LlamaForCausalLM.from_pretrained(None, config=config, state_dict=state_dict)
+    model.generate()
     hf_config = vars(model.config)
     print(f"hf_config: {hf_config}")
 
