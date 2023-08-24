@@ -70,7 +70,6 @@ def split_and_convert(args):
     assert(i_gpu_num % t_gpu_num == 0)
 
     factor = (int)(i_gpu_num / t_gpu_num)
-
     # load position_embedding from rank 0
     # model = torch.load(ckpt_name)
     print(f'load model from {args.in_file}')
@@ -95,6 +94,7 @@ def split_and_convert(args):
         state_dict.update(w)
 
     model = LlamaForCausalLM.from_pretrained(None, config=config, state_dict=state_dict)
+    model.generate()
     hf_config = vars(model.config)
     print(f"hf_config: {hf_config}")
 

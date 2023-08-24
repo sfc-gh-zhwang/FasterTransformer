@@ -47,7 +47,6 @@ void fusedQKV_masked_attention_dispatch(const T*     qkv_buf,
                                         const int    inference_batch_size,
                                         const int    beam_width,
                                         const int    head_num,
-                                        const int    kv_head_num,
                                         const int    size_per_head,
                                         const int    rotary_embedding_dim,
                                         const bool   neox_rotary_style,
@@ -76,8 +75,8 @@ void fusedQKV_masked_attention_dispatch(const T*     qkv_buf,
     int hidden_units = head_num * size_per_head;
     if (qkv_bias != nullptr) {
         params.q_bias = reinterpret_cast<const DataType*>(qkv_bias);
-        params.k_bias = reinterpret_cast<const DataType*>(qkv_bias) + head_num * size_per_head;
-        params.v_bias = reinterpret_cast<const DataType*>(qkv_bias) + (head_num + kv_head_num) * size_per_head;
+	    params.k_bias = reinterpret_cast<const DataType*>(qkv_bias) + hidden_units;
+        params.v_bias = reinterpret_cast<const DataType*>(qkv_bias) + 2 * hidden_units;
     }
     else {
         params.q_bias = nullptr;
@@ -90,14 +89,15 @@ void fusedQKV_masked_attention_dispatch(const T*     qkv_buf,
 
     // Set the input buffers.
     params.q = reinterpret_cast<const DataType*>(qkv_buf);
-    params.k = reinterpret_cast<const DataType*>(qkv_buf) + head_num * size_per_head;
-    params.v = reinterpret_cast<const DataType*>(qkv_buf) + (head_num + kv_head_num) * size_per_head;
-    // TODO(zhwang): support int8 mode
-    // else {
-    //     params.k = reinterpret_cast<const DataType*>(reinterpret_cast<const int8_t*>(qkv_buf) + hidden_units);
-    //     params.v = reinterpret_cast<const DataType*>(reinterpret_cast<const int8_t*>(qkv_buf) + 2 * hidden_units);
-    // }
-    params.stride   = (head_num + 2 * kv_head_num) * size_per_head;
+	    if (int8_mode != 2) {
+        params.k = reinterpret_cast<const DataType*>(qkv_buf) + hidden_units;
+        params.v = reinterpret_cast<const DataType*>(qkv_buf) + 2 * hidden_units;
+    }
+    else {
+        params.k = reinterpret_cast<const DataType*>(reinterpret_cast<const int8_t*>(qkv_buf) + hidden_units);
+        params.v = reinterpret_cast<const DataType*>(reinterpret_cast<const int8_t*>(qkv_buf) + 2 * hidden_units);
+    }
+    params.stride   = 3 * hidden_units;
     params.finished = const_cast<bool*>(finished);
 
     params.k_cache                  = reinterpret_cast<DataType*>(key_cache);
@@ -160,7 +160,6 @@ void fusedQKV_masked_attention_dispatch(const T*     qkv_buf,
                                                      const int    inference_batch_size,                                \
                                                      const int    beam_width,                                          \
                                                      const int    head_num,                                            \
-                                                     const int    kv_head_num,                                         \
                                                      const int    size_per_head,                                       \
                                                      const int    rotary_embedding_dim,                                \
                                                      const bool   neox_rotary_style,                                   \
@@ -488,7 +487,7 @@ LlamaDecoderSelfAttentionLayer<T>::~LlamaDecoderSelfAttentionLayer()
 }
 
 template<typename T>
-void LlamaDecoderSelfAttentionLayer<T>::forward(TensorMap*                output_tensors,
+void LlamaDecoderSelfAttentionLayer<T>::forward(TensorMap*           output_tensors,
                                            TensorMap*                input_tensors,
                                            const AttentionWeight<T>* attention_weights)
 {
@@ -509,8 +508,8 @@ void LlamaDecoderSelfAttentionLayer<T>::forward(TensorMap*                output
 
     // output tensors:
     //      attention_output [batch_size, d_model_],
-    //      key_cache [batch, local_kv_head_num, size_per_head // x, memory_max_len, x]
-    //      value_cache [batch, local_kv_head_num, memory_max_len, size_per_head]
+    //      key_cache [batch, local_head_num, size_per_head // x, memory_max_len, x]
+    //      value_cache [batch, local_head_num, memory_max_len, size_per_head]
 
     FT_LOG_DEBUG(__PRETTY_FUNCTION__);
     FT_CHECK(output_tensors->at("key_cache").shape.size() == 5 || output_tensors->at("key_cache").shape.size() == 3);
@@ -632,7 +631,6 @@ void LlamaDecoderSelfAttentionLayer<T>::forward(TensorMap*                output
         batch_size,
         beam_width,
         local_head_num_,
-        local_kv_head_num_,
         size_per_head_,
         rotary_embedding_dim_,
         neox_rotary_style_,
