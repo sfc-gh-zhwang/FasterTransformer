@@ -365,7 +365,7 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:TensorParallelDecoderCrossAttentionLayer>
   $<TARGET_OBJECTS:TensorParallelDecoderSelfAttentionLayer>
   $<TARGET_OBJECTS:TensorParallelLlamaDecoderSelfAttentionLayer>
-  $<TARGET_OBJECTS:TensorParallelLlamaDecoderCrossAttentionLayer>
+  $<TARGET_OBJECTS:TensorParallelLlamaContextAttentionLayer>
   $<TARGET_OBJECTS:TensorParallelGeluFfnLayer>
   $<TARGET_OBJECTS:TensorParallelSiluFfnLayer>
   $<TARGET_OBJECTS:TensorParallelGptContextAttentionLayer>
