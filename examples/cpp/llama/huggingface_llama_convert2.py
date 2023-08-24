@@ -122,7 +122,7 @@ def split_and_convert(args):
 
     def try_dump(key, cache, loaded, save_name, saved_dir, factor, transpose=True):
         weight = get_param(key, cache, loaded)
-        if not weight:
+        if weight is not None:
             return
         if transpose:
             weight = weight.T
@@ -144,7 +144,6 @@ def split_and_convert(args):
             continue
         w = torch.load(os.path.join(args.in_file, f), map_location='cpu')
         for l in range(hf_config["num_hidden_layers"]):
-            print(f"converting layer {l}")
             # first merge QKV into a single weight
             # concat direct to FT shape: [hidden_size, 3, head_num, head_size]
             # copied from huggingface_gptj_ckpt_convert.py
