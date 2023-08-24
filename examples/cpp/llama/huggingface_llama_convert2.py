@@ -237,6 +237,7 @@ def split_and_convert(args):
             to_del.append(param)
         for k in to_del:
             del w[k]
+        print(w.keys())
         state_dict.update(w)
 
 
