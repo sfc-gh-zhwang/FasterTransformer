@@ -241,6 +241,11 @@ void LlamaDecoder<T>::forward(std::unordered_map<std::string, Tensor>*          
     for (auto t = k_cache.shape.begin() + 2; t != k_cache.shape.end(); ++t) {
         self_k_cache_size.push_back(*t);
     }
+    printf("self_k_cache_size: ");
+    for (int i=0; i<self_k_cache_size.size(); i++) {
+        printf("%d ", self_k_cache_size[i]);
+    }
+    printf("\n");
     std::vector<size_t> self_v_cache_size;
     self_v_cache_size.push_back(local_batch_size);
     for (auto t = v_cache.shape.begin() + 2; t != v_cache.shape.end(); ++t) {
@@ -269,7 +274,7 @@ void LlamaDecoder<T>::forward(std::unordered_map<std::string, Tensor>*          
             }
         }
 
-        // TODO 使用的是T5 LN，这里是没有int8的参数支持
+        // TODO(zhwang): NO int8 support here, add later.
         invokeGeneralT5LayerNorm(decoder_normed_input_,
                                  layer_input,
                                  gpt_decoder_layer_weight->at(l)->pre_layernorm_weights.gamma,
