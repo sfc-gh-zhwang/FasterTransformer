@@ -142,7 +142,9 @@ def split_and_convert(args):
     for f in os.listdir(args.in_file):
         if not f.endswith('.bin'):
             continue
-        w = torch.load(os.path.join(args.in_file, f), map_location='cpu')
+        f = os.path.join(args.in_file, f)
+        print(f'processing {f}')
+        w = torch.load(f, map_location='cpu')
         for l in range(hf_config["num_hidden_layers"]):
             # first merge QKV into a single weight
             # concat direct to FT shape: [hidden_size, 3, head_num, head_size]
