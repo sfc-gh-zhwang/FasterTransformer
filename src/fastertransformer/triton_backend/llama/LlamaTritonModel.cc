@@ -238,7 +238,7 @@ std::string LlamaTritonModel<T>::toString()
        << "\nhead_num: " << head_num_ << "\nsize_per_head: " << size_per_head_ << "\ninter_size: " << inter_size_
        << "\nnum_layer: " << num_layer_ << "\nvocab_size: " << vocab_size_ << "\nlayernorm_eps: " << layernorm_eps_
        << "\nstart_id: " << start_id_ << "\nend_id: " << end_id_ << "\nuse_gptj_residual: " << use_gptj_residual_
-       << "\nprompt_learning_type_: " << static_cast<int>(prompt_learning_type_)
+       << "\nprompt_learning_type_: " << static_cast<int>(prompt_learning_type_) << "\nkv_head_num: " << kv_head_num_
        << "\nprompt_learning_start_id_: " << prompt_learning_start_id_ << "\ntensor_para_size: " << tensor_para_size_
        << "\npipeline_para_size: " << pipeline_para_size_ << "\nenable_custom_all_reduce: " << enable_custom_all_reduce_
        << "\nint8_mode: " << int8_mode_

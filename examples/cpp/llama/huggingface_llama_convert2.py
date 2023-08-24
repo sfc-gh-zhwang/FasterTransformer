@@ -64,24 +64,13 @@ def split_and_convert(args):
     assert(i_gpu_num % t_gpu_num == 0)
 
     factor = (int)(i_gpu_num / t_gpu_num)
-    # load position_embedding from rank 0
-    # model = torch.load(ckpt_name)
     print(f'load model from {args.in_file}')
     # model = LlamaForCausalLM.from_pretrained(args.in_file, device_map='auto')
     config = AutoConfig.from_pretrained(args.in_file)
     # num_layers = 3
     # config.num_hidden_layers = num_layers
-    print(config)
-    state_dict = {}
-    for f in os.listdir(args.in_file):
-        if not f.endswith('.bin'):
-            continue
-        w = torch.load(os.path.join(args.in_file, f), map_location='cpu')
-        state_dict.update(w)
 
-    model = LlamaForCausalLM.from_pretrained(None, config=config, state_dict=state_dict)
-    model.generate()
-    hf_config = vars(model.config)
+    hf_config = vars(config)
     print(f"hf_config: {hf_config}")
 
     print("named parameters:")
@@ -106,7 +95,7 @@ def split_and_convert(args):
         config['llama']["kv_head_num"] = str(kv_head_num)
         config['llama']["size_per_head"] = str(head_size)
         config['llama']["inter_size"] = str(hf_config["intermediate_size"])
-        config['llama']["num_layer"] = str(num_layers)
+        config['llama']["num_layer"] = str(hf_config["num_hidden_layers"])
         config['llama']["rotary_embedding"] = str(head_size)
         config['llama']['layernorm_eps'] = str(hf_config["rms_norm_eps"])
         config['llama']["vocab_size"] = str(hf_config["vocab_size"])
@@ -122,6 +111,19 @@ def split_and_convert(args):
 
     param_to_weights = lambda param: param.detach().cpu().numpy().astype(np_weight_data_type)
 
+    def get_param(key, cache, loaded):
+        if key in cache:
+            return cache[key]
+        if key in loaded:
+            return loaded[key]
+        return None
+
+    def clear_param(key, cache, loaded):
+        if key in cache:
+            del cache[key]
+        if key in loaded:
+            del loaded[key]
+
     # layer-wise weights, example:
     #   - model.layers.0.self_attn.q_proj.weight
     #   - model.layers.0.self_attn.k_proj.weight
@@ -132,68 +134,75 @@ def split_and_convert(args):
     #   - model.layers.0.mlp.up_proj.weight
     #   - model.layers.0.input_layernorm.weight
     #   - model.layers.0.post_attention_layernorm.weight
-    for l in range(num_layers):
-        print(f"converting layer {l}")
-        # first merge QKV into a single weight
-        # concat direct to FT shape: [hidden_size, 3, head_num, head_size]
-        # copied from huggingface_gptj_ckpt_convert.py
-        # qkv_weights = np.stack([
-        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight']),
-        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight']),
-        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight']),
-        # ])
-        # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
-        q_proj = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight'])
-        k_proj = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight'])
-        v_proj = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight'])
-        q_proj = np.split(q_proj, factor, axis=0)
-        k_proj = np.split(k_proj, factor, axis=0)
-        v_proj = np.split(v_proj, factor, axis=0)
-        for j in range(factor):
-            qkv_weights = np.concatenate((q_proj[j], k_proj[j], v_proj[j]), axis=0)
-            print(qkv_weights.shape)
+    state_dict = {}
+    for f in os.listdir(args.in_file):
+        if not f.endswith('.bin'):
+            continue
+        w = torch.load(os.path.join(args.in_file, f), map_location='cpu')
+        for l in range(hf_config["num_hidden_layers"]):
+            print(f"converting layer {l}")
+            # first merge QKV into a single weight
+            # concat direct to FT shape: [hidden_size, 3, head_num, head_size]
+            # copied from huggingface_gptj_ckpt_convert.py
+            # qkv_weights = np.stack([
+            #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight']),
+            #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight']),
+            #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight']),
+            # ])
             # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
-            qkv_weights = np.transpose(qkv_weights)
-            qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
-            saved_path = saved_dir + "/" + qkv_weights_base_name + ".%d.bin" % j
-            qkv_weights.tofile(saved_path)
-        # qkv_weights = np.concatenate((
-        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight']),
-        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight']),
-        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight']),
-        # ), axis=0)
-        # print(qkv_weights.shape)
-        # # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
-        # qkv_weights = np.transpose(qkv_weights)
-        # qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
-        # split_and_convert_process(saved_dir, factor, qkv_weights_base_name, qkv_weights)
+            q_key = f'model.layers.{l}.self_attn.q_proj.weight'
+            k_key = f'model.layers.{l}.self_attn.k_proj.weight'
+            v_key = f'model.layers.{l}.self_attn.v_proj.weight'
+            q_proj = get_param(q_key, state_dict, w)
+            k_proj = get_param(k_key, state_dict, w)
+            v_proj = get_param(v_key, state_dict, w)
 
-        # attention dense
-        o_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.o_proj.weight']).T
-        o_weight_base_name = f'model.layers.{l}.attention.dense.weight'
-        split_and_convert_process(saved_dir, factor, o_weight_base_name, o_weight)
+            if q_proj and k_proj and v_proj:
+                q_proj = param_to_weights(q_proj)
+                k_proj = param_to_weights(k_proj)
+                v_proj = param_to_weights(v_proj)
+                q_proj = np.split(q_proj, factor, axis=0)
+                k_proj = np.split(k_proj, factor, axis=0)
+                v_proj = np.split(v_proj, factor, axis=0)
+                for j in range(factor):
+                    qkv_weights = np.concatenate((q_proj[j], k_proj[j], v_proj[j]), axis=0)
+                    print(qkv_weights.shape)
+                    # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
+                    qkv_weights = np.transpose(qkv_weights)
+                    qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
+                    saved_path = saved_dir + "/" + qkv_weights_base_name + ".%d.bin" % j
+                    qkv_weights.tofile(saved_path)
+                clear_param(q_key, state_dict, w)
+                clear_param(k_key, state_dict, w)
+                clear_param(v_key, state_dict, w)
 
-        # MLP
-        mlp_down_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.down_proj.weight']).T
-        mlp_down_base_name = f'model.layers.{l}.mlp.down_proj.weight'
-        split_and_convert_process(saved_dir, factor, mlp_down_base_name, mlp_down_weight)
+            # attention dense
+            o_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.o_proj.weight']).T
+            o_weight_base_name = f'model.layers.{l}.attention.dense.weight'
+            split_and_convert_process(saved_dir, factor, o_weight_base_name, o_weight)
 
-        mlp_gate_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.gate_proj.weight']).T
-        mlp_gate_base_name = f'model.layers.{l}.mlp.gate_proj.weight'
-        split_and_convert_process(saved_dir, factor, mlp_gate_base_name, mlp_gate_weight)
+            # MLP
+            mlp_down_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.down_proj.weight']).T
+            mlp_down_base_name = f'model.layers.{l}.mlp.down_proj.weight'
+            split_and_convert_process(saved_dir, factor, mlp_down_base_name, mlp_down_weight)
 
-        mlp_up_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.up_proj.weight']).T
-        mlp_up_base_name = f'model.layers.{l}.mlp.up_proj.weight'
-        split_and_convert_process(saved_dir, factor, mlp_up_base_name, mlp_up_weight)
+            mlp_gate_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.gate_proj.weight']).T
+            mlp_gate_base_name = f'model.layers.{l}.mlp.gate_proj.weight'
+            split_and_convert_process(saved_dir, factor, mlp_gate_base_name, mlp_gate_weight)
 
-        # LayerNorm
-        input_ln_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.input_layernorm.weight'])
-        input_ln_base_name = f'model.layers.{l}.input_layernorm.weight'
-        split_and_convert_process(saved_dir, factor, input_ln_base_name, input_ln_weight)
+            mlp_up_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.mlp.up_proj.weight']).T
+            mlp_up_base_name = f'model.layers.{l}.mlp.up_proj.weight'
+            split_and_convert_process(saved_dir, factor, mlp_up_base_name, mlp_up_weight)
 
-        post_attn_ln_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.post_attention_layernorm.weight'])
-        post_attn_ln_base_name = f'model.layers.{l}.post_attention_layernorm.weight'
-        split_and_convert_process(saved_dir, factor, post_attn_ln_base_name, post_attn_ln_weight)
+            # LayerNorm
+            input_ln_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.input_layernorm.weight'])
+            input_ln_base_name = f'model.layers.{l}.input_layernorm.weight'
+            split_and_convert_process(saved_dir, factor, input_ln_base_name, input_ln_weight)
+
+            post_attn_ln_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.post_attention_layernorm.weight'])
+            post_attn_ln_base_name = f'model.layers.{l}.post_attention_layernorm.weight'
+            split_and_convert_process(saved_dir, factor, post_attn_ln_base_name, post_attn_ln_weight)
+        state_dict.update(w)
 
         print(f"done layer {l}")
 
