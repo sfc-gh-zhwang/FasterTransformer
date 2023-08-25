@@ -234,7 +234,7 @@ def split_and_convert(args):
                 param.detach().cpu().float().numpy().astype(np_weight_data_type).tofile(saved_dir + "model.lm_head.weight.bin")
             else:
                 continue
-            to_del.append(param)
+            to_del.append(name)
         # for k in to_del:
         #     del w[k]
         print(w.keys())
