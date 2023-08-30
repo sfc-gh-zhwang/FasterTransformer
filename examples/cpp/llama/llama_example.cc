@@ -454,8 +454,12 @@ void llama_example(const INIReader reader)
             size_t seqLCount = request_batch_size * beam_width;
             int* seqlBuf = new int[seqLCount];
 
+            size_t inLCount = request_batch_size * beam_width;
+            int* inlBuf = new int[inLCount];
+
             cudaD2Hcpy(hBuf, d_output_ids, outCount);
             cudaD2Hcpy(seqlBuf, d_sequence_lengths, seqLCount);
+            cudaD2Hcpy(inlBuf, d_sequence_lengths, seqLCount);
             printf("seqlBuf: %d\n", seqlBuf[0]);
 
             {
