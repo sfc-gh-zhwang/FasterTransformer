@@ -311,6 +311,7 @@ int main(int argc, char* argv[])
 
     // Note: Only supports that all nodes have same gpu count
     const int   gpu_count  = ft::getDeviceCount();
+    std::cout << "gpu_count: " << gpu_count << std::endl;
     const int   world_size = node_num * gpu_count;
     std::string ini_name   = argc >= 2 ? std::string(argv[1]) : "/data/FasterTransformer/examples/cpp/llama/llama_config.ini";
 
