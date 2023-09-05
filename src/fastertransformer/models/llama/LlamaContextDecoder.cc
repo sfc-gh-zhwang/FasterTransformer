@@ -572,6 +572,7 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
                 }
 
                 sync_check_cuda_error();
+                #define ENABLE_FLEX_DEBUG
                 #ifdef ENABLE_FLEX_DEBUG 
                 if (l == 1) {
                     printf("%d %d: %d %d\n", l, ite, h_token_num, hidden_units_);
