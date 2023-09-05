@@ -631,6 +631,7 @@ void LlamaDecoderSelfAttentionLayer<T>::forward(TensorMap*           output_tens
         batch_size,
         beam_width,
         local_head_num_,
+        local_kv_head_num_,
         size_per_head_,
         rotary_embedding_dim_,
         neox_rotary_style_,
