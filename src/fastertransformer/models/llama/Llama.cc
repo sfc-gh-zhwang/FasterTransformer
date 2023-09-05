@@ -127,6 +127,7 @@ void Llama<T>::allocateBuffer(
     h_finished_buf_   = new bool[batchxbeam];
     sequence_lengths_ = (int*)(allocator_->reMalloc(sequence_lengths_, sizeof(int) * batchxbeam, false));
 
+    printf("kv cache byte size: %d\n", sizeof(T) * self_cache_size * 2);
     key_cache_   = (T*)(allocator_->reMalloc(key_cache_, sizeof(T) * self_cache_size * 2, true));
     value_cache_ = key_cache_ + self_cache_size;
     if (beam_width > 1) {
