@@ -46,6 +46,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
     //      key_cache [batch, local_kv_head_num, size_per_head // x, max_seq_len, x]
     //      value_cache [batch, local_kv_head_num, max_seq_len, size_per_head]
     printf("LlamaContextAttentionLayer<T>::forward\n");
+    printf("is_free_buffer_after_forward_: %d\n", is_free_buffer_after_forward_);
     FT_LOG_DEBUG("%s start", __PRETTY_FUNCTION__);
     FT_CHECK(output_tensors->at("key_cache").shape.size() == 5);
     FT_CHECK(output_tensors->at("value_cache").shape.size() == 4
@@ -328,7 +329,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                                    k_buf_2_,
                                    v_buf_2_,
                                    param,  // prefix prompt
-                                   qkv_buf_,
+                                   qkv_buf_tmp_,
                                    attention_weights->query_weight.bias,
                                    padding_offset,
                                    request_batch_size,
@@ -355,7 +356,7 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                                 max_prompt_length + request_seq_len,  // max input length + prefix prompt length
                                 max_seq_len,
                                 size_per_head_,
-                                local_head_num_,
+                                local_kv_head_num_,
                                 stream_);
     // IDEA : after this, k_cache = (batch_size, num_heads, Dh/x, prefix_prompt_len + L, x)
     // k_cache = (batch_size, num_heads, prefix_prompt_len + L, Dh)
@@ -727,9 +728,10 @@ void LlamaContextAttentionLayer<T>::allocateBuffer(size_t batch_size, size_t seq
     qkv_buf_ = (T*)allocator_->reMalloc(qkv_buf_, type_size * 3 * batch_size * seq_len * local_hidden_units_, true);
     size_t local_qkv_size = local_hidden_units_ + 2 * local_kv_head_num_ * size_per_head_;
     qkv_buf_tmp_ = (T*)allocator_->reMalloc(qkv_buf_tmp_, type_size * batch_size * seq_len * local_qkv_size, true);
-    q_buf_2_ = (T*)allocator_->reMalloc(q_buf_2_, sizeof(T) * batch_size * seq_len * 3 * local_hidden_units_, true);
+    // q_buf_2_ = (T*)allocator_->reMalloc(q_buf_2_, sizeof(T) * batch_size * seq_len * 3 * local_hidden_units_, true);
+    q_buf_2_ = (T*)allocator_->reMalloc(q_buf_2_, sizeof(T) * batch_size * seq_len * local_qkv_size, true);
     k_buf_2_ = q_buf_2_ + batch_size * seq_len * local_hidden_units_;
-    v_buf_2_ = k_buf_2_ + batch_size * seq_len * local_hidden_units_;
+    v_buf_2_ = k_buf_2_ + batch_size * seq_len * local_kv_head_num_ * size_per_head_;
 
     // save memory usage when using fmha
     if (allocate_qk_buf) {
