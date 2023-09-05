@@ -444,7 +444,7 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
                 ite_cache_offset *= *t;
             }
             cache_offset += ite_cache_offset;
-
+            printf("cache_offset: %d\n", cache_offset);
             T* k_cache_ptr = use_shared_contexts ? k_cache_layer_ : k_cache.getPtrWithOffset<T>(cache_offset);
             T* v_cache_ptr = use_shared_contexts ? v_cache_layer_ : v_cache.getPtrWithOffset<T>(cache_offset);
 
