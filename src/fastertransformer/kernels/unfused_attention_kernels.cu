@@ -1840,7 +1840,7 @@ void invokeTranspose4dBatchMajor(T*           k_dst,
                                               const int    max_seq_len,                                                \
                                               const int    size_per_head,                                              \
                                               const int    local_head_num,                                             \
-                                              cudaStream_t stream)
+                                              cudaStream_t stream);
     template void invokeTranspose4dBatchMajor(T*           k_dst,                                                      \
                                               T*           v_dst,                                                      \
                                               const T*     k_src,                                                      \
