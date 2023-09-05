@@ -163,7 +163,7 @@ void llama_example(const INIReader reader)
 
     // Handle bad_words dictionary
     std::vector<int> bad_words;
-    read_word_list("/data/FasterTransformer/examples/cpp/llama/bad_words.csv", bad_words);
+    read_word_list("/notebooks/FasterTransformer/examples/cpp/llama/bad_words.csv", bad_words);
 
     int* d_bad_words = nullptr;
     deviceMalloc(&d_bad_words, bad_words.size(), false);
@@ -171,7 +171,7 @@ void llama_example(const INIReader reader)
 
     // Handle stop_words dictionary
     std::vector<int> stop_words;
-    read_word_list("/data/FasterTransformer/examples/cpp/llama/stop_words.csv", stop_words);
+    read_word_list("/notebooks/FasterTransformer/examples/cpp/llama/stop_words.csv", stop_words);
 
     const size_t stop_words_len = stop_words.size() / 2;
     // Tile with same dict for each element
