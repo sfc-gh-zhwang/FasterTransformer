@@ -479,6 +479,7 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
             }
             #endif
             printf("use_shared_contexts: %d\n", use_shared_contexts);
+            use_shared_contexts = false;
             if (use_shared_contexts) {
                 // Even with local batches, we must process the whole K/V caches as any
                 // element in batch_idx_to_compact_idx may reference the local batch
