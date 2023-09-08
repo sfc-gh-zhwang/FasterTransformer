@@ -71,7 +71,7 @@ void fusedQKV_masked_attention_dispatch(const T*     qkv_buf,
 {
     using DataType = typename SATypeConverter<T>::Type;
     // Prepare the parameters.
-    Masked_multihead_attention_params<DataType> params;
+    Masked_llama_multihead_attention_params<DataType> params;
     memset(&params, 0, sizeof(params));
     int hidden_units = head_num * size_per_head;
     if (qkv_bias != nullptr) {
@@ -113,6 +113,7 @@ void fusedQKV_masked_attention_dispatch(const T*     qkv_buf,
     // timestep adding max_prefix_prompt_length for shared memory size calculation and rotary embedding computation
     params.timestep             = step + max_prefix_prompt_length - 1;
     params.num_heads            = head_num;
+    params.num_kv_heads         = kv_head_num;
     params.hidden_size_per_head = size_per_head;
     params.rotary_embedding_dim = rotary_embedding_dim;
     params.neox_rotary_style    = neox_rotary_style;
