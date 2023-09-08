@@ -99,37 +99,3 @@ void masked_multihead_attention(const Masked_llama_multihead_attention_params<__
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void cross_multihead_attention(const Cross_multihead_attention_params<float>& params, const cudaStream_t& stream)
-{
-    multihead_attention_<float, Cross_multihead_attention_params<float>>(params, stream);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void cross_multihead_attention(const Cross_multihead_attention_params<uint16_t>& params, const cudaStream_t& stream)
-{
-    multihead_attention_<uint16_t, Cross_multihead_attention_params<uint16_t>>(params, stream);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#ifdef ENABLE_BF16
-void cross_multihead_attention(const Cross_multihead_attention_params<__nv_bfloat16>& params,
-                               const cudaStream_t&                                    stream)
-{
-    multihead_attention_<__nv_bfloat16, Cross_multihead_attention_params<__nv_bfloat16>>(params, stream);
-}
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#ifdef ENABLE_FP8
-void cross_multihead_attention(const Cross_multihead_attention_params<__nv_fp8_e4m3>& params,
-                               const cudaStream_t&                                    stream)
-{
-    multihead_attention_<__nv_fp8_e4m3, Cross_multihead_attention_params<__nv_fp8_e4m3>>(params, stream);
-}
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
