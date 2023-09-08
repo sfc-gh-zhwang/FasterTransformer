@@ -27,7 +27,7 @@
 #include <stdlib.h>
 
 template<typename T>
-struct Llama_multihead_attention_params<T>: public Multihead_attention_params_base<T> {
+struct Llama_multihead_attention_params: public Multihead_attention_params_base<T> {
     // allows to exist attention eary
     bool* finished = nullptr;
 
@@ -40,14 +40,6 @@ struct Llama_multihead_attention_params<T>: public Multihead_attention_params_ba
 
 template<class T>
 using Masked_llama_multihead_attention_params = Llama_multihead_attention_params<T>;
-
-template<typename T>
-struct outputCrossAttentionParam {
-    // max decoder output length
-    int  max_decoder_seq_len        = 0;
-    T*   cross_attention_out        = nullptr;
-    bool is_return_cross_attentions = false;
-};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
