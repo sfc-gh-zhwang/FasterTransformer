@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "src/fastertransformer/kernels/llama/decoder_masked_multihead_attention.h"
+#include "src/fastertransformer/kernels/decoder_masked_multihead_attention.h"
 #include "src/fastertransformer/layers/attention_layers_fp8/AttentionFP8Weight.h"
 #include "src/fastertransformer/utils/cuda_bf16_wrapper.h"
 #include "src/fastertransformer/utils/cuda_fp8_utils.h"
