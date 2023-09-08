@@ -15,7 +15,7 @@
  */
 
 #include "src/fastertransformer/layers/attention_layers/LlamaDecoderSelfAttentionLayer.h"
-#include "src/fastertransformer/kernels/decoder_masked_multihead_attention.h"
+#include "src/fastertransformer/kernels/llama/decoder_masked_multihead_attention.h"
 #include "src/fastertransformer/utils/logger.h"
 #include "src/fastertransformer/utils/memory_utils.h"
 #include "src/fastertransformer/kernels/repeat_kv_kernels.h"
