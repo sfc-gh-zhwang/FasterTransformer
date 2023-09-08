@@ -19,5 +19,5 @@ set(decoder_masked_multihead_attention_files
 )
 file(GLOB decoder_masked_multihead_attention_files ${decoder_masked_multihead_attention_files} ./decoder_masked_multihead_attention/*.cu)
 add_library(llama_decoder_masked_multihead_attention STATIC ${decoder_masked_multihead_attention_files})
-set_property(TARGET decoder_masked_multihead_attention PROPERTY POSITION_INDEPENDENT_CODE  ON)
-set_property(TARGET decoder_masked_multihead_attention PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+set_property(TARGET llama_decoder_masked_multihead_attention PROPERTY POSITION_INDEPENDENT_CODE  ON)
+set_property(TARGET llama_decoder_masked_multihead_attention PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
