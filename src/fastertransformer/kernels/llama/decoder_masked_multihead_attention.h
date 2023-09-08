@@ -49,7 +49,7 @@
 // Dh: Hidden dimension per head - Dh = D / H.
 
 template<typename T>
-struct Multihead_attention_params_base {
+struct Multihead_attention_params_base2 {
 
     // The output buffer. Dimensions B x D.
     T* out = nullptr;
