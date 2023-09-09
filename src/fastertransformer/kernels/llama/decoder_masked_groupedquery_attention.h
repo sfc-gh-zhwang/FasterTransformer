@@ -31,6 +31,8 @@ struct GroupedQuery_attention_params: public Multihead_attention_params_base<T> 
     // allows to exist attention eary
     bool* finished          = nullptr;
     int   num_kv_heads      = 0;
+    // required in case of masked attention with different length
+    const int* length_per_sample = nullptr;
 };
 
 template<class T>
