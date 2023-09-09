@@ -14,10 +14,10 @@
 
 cmake_minimum_required(VERSION 3.8)
 
-set(llama_decoder_masked_multihead_attention_files
+set(decoder_masked_groupedquery_attention_files
     decoder_masked_groupedquery_attention.cu
 )
-file(GLOB llama_decoder_masked_multihead_attention_files ${llama_decoder_masked_multihead_attention_files} ./decoder_masked_groupedquery_attention/*.cu)
-add_library(llama_decoder_masked_multihead_attention STATIC ${llama_decoder_masked_multihead_attention_files})
-set_property(TARGET llama_decoder_masked_multihead_attention PROPERTY POSITION_INDEPENDENT_CODE  ON)
-set_property(TARGET llama_decoder_masked_multihead_attention PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+file(GLOB decoder_masked_groupedquery_attention_files ${decoder_masked_groupedquery_attention_files} ./decoder_masked_groupedquery_attention/*.cu)
+add_library(decoder_masked_groupedquery_attention STATIC ${decoder_masked_groupedquery_attention_files})
+set_property(TARGET decoder_masked_groupedquery_attention PROPERTY POSITION_INDEPENDENT_CODE  ON)
+set_property(TARGET decoder_masked_groupedquery_attention PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
