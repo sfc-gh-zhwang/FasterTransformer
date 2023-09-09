@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/fastertransformer/kernels/llama/decoder_masked_multihead_attention.h"
+#include "src/fastertransformer/kernels/llama/decoder_masked_groupedquery_attention.h"
 #include "src/fastertransformer/kernels/llama/decoder_masked_multihead_attention/decoder_masked_multihead_attention_template.hpp"
 #include "src/fastertransformer/kernels/decoder_masked_multihead_attention_utils.h"
 #include "src/fastertransformer/utils/cuda_bf16_wrapper.h"
