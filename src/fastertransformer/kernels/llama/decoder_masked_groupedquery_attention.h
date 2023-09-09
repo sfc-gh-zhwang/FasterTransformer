@@ -33,16 +33,19 @@ struct GroupedQuery_attention_params: public Multihead_attention_params_base<T> 
     int   num_kv_heads      = 0;
 };
 
+template<class T>
+using Masked_groupedquery_attention_params = Multihead_attention_params<T>;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void masked_groupedquery_attention(const GroupedQuery_attention_params<float>& params, const cudaStream_t& stream);
-void masked_groupedquery_attention(const GroupedQuery_attention_params<uint16_t>& params, const cudaStream_t& stream);
+void masked_groupedquery_attention(const Masked_groupedquery_attention_params<float>& params, const cudaStream_t& stream);
+void masked_groupedquery_attention(const Masked_groupedquery_attention_params<uint16_t>& params, const cudaStream_t& stream);
 #ifdef ENABLE_BF16
-void masked_groupedquery_attention(const GroupedQuery_attention_params<__nv_bfloat16>& params,
+void masked_groupedquery_attention(const Masked_groupedquery_attention_params<__nv_bfloat16>& params,
                                 const cudaStream_t&                                     stream);
 #endif
 #ifdef ENABLE_FP8
-void masked_groupedquery_attention(const GroupedQuery_attention_params<__nv_fp8_e4m3>& params,
+void masked_groupedquery_attention(const Masked_groupedquery_attention_params<__nv_fp8_e4m3>& params,
                                 const cudaStream_t&                                     stream);
 #endif
 

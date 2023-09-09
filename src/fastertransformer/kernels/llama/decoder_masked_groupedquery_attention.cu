@@ -66,35 +66,35 @@ void groupedquery_attention_(const KERNEL_PARAMS_TYPE& params, const cudaStream_
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void masked_groupedquery_attention(const Masked_multihead_attention_params<float>& params, const cudaStream_t& stream)
+void masked_groupedquery_attention(const Masked_groupedquery_attention_params<float>& params, const cudaStream_t& stream)
 {
-    groupedquery_attention_<float, Masked_multihead_attention_params<float>>(params, stream);
+    groupedquery_attention_<float, Masked_groupedquery_attention_params<float>>(params, stream);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void masked_groupedquery_attention(const Masked_multihead_attention_params<uint16_t>& params, const cudaStream_t& stream)
+void masked_groupedquery_attention(const Masked_groupedquery_attention_params<uint16_t>& params, const cudaStream_t& stream)
 {
-    groupedquery_attention_<uint16_t, Masked_multihead_attention_params<uint16_t>>(params, stream);
+    groupedquery_attention_<uint16_t, Masked_groupedquery_attention_params<uint16_t>>(params, stream);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ENABLE_BF16
-void masked_groupedquery_attention(const Masked_multihead_attention_params<__nv_bfloat16>& params,
+void masked_groupedquery_attention(const Masked_groupedquery_attention_params<__nv_bfloat16>& params,
                                 const cudaStream_t&                                     stream)
 {
-    groupedquery_attention_<__nv_bfloat16, Masked_multihead_attention_params<__nv_bfloat16>>(params, stream);
+    groupedquery_attention_<__nv_bfloat16, Masked_groupedquery_attention_params<__nv_bfloat16>>(params, stream);
 }
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ENABLE_FP8
-void masked_groupedquery_attention(const Masked_multihead_attention_params<__nv_fp8_e4m3>& params,
+void masked_groupedquery_attention(const Masked_groupedquery_attention_params<__nv_fp8_e4m3>& params,
                                 const cudaStream_t&                                     stream)
 {
-    groupedquery_attention_<__nv_fp8_e4m3, Masked_multihead_attention_params<__nv_fp8_e4m3>>(params, stream);
+    groupedquery_attention_<__nv_fp8_e4m3, Masked_groupedquery_attention_params<__nv_fp8_e4m3>>(params, stream);
 }
 #endif
 
