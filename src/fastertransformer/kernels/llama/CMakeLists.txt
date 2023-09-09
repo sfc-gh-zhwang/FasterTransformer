@@ -15,7 +15,7 @@
 cmake_minimum_required(VERSION 3.8)
 
 set(llama_decoder_masked_multihead_attention_files
-    decoder_masked_multihead_attention.cu
+    decoder_masked_groupedquery_attention.cu
 )
 file(GLOB llama_decoder_masked_multihead_attention_files ${llama_decoder_masked_multihead_attention_files} ./decoder_masked_multihead_attention/*.cu)
 add_library(llama_decoder_masked_multihead_attention STATIC ${llama_decoder_masked_multihead_attention_files})
