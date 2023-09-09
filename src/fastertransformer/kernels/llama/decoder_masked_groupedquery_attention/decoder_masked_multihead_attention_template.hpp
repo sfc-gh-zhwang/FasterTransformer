@@ -1061,6 +1061,8 @@ inline size_t smem_size_in_bytes(const GroupedQuery_attention_params<T>&        
                                  int                                                      threads_per_value,
                                  int                                                      threads_per_block)
 {
+    // TODO(zhwang): hacky
+    constexpr bool DO_CROSS_ATTENTION = false;
     using Tk = typename kernel_type_t<T>::Type;
     // The amount of shared memory needed to store the Q*K^T values in float.
     const int max_timesteps = min(params.timestep, params.memory_max_len);
