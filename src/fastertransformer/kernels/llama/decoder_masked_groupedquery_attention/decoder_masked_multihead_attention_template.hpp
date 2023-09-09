@@ -1056,8 +1056,8 @@ struct kernel_type_t<__nv_fp8_e4m3> {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-template<typename T, bool DO_CROSS_ATTENTION>
-inline size_t smem_size_in_bytes(const Multihead_attention_params<T, DO_CROSS_ATTENTION>& params,
+template<typename T>
+inline size_t smem_size_in_bytes(const GroupedQuery_attention_params<T>&                  params,
                                  int                                                      threads_per_value,
                                  int                                                      threads_per_block)
 {
@@ -1114,9 +1114,8 @@ template<
     int THREADS_PER_VALUE,
     // The number of threads in a threadblock.
     int  THREADS_PER_BLOCK,
-    bool DO_CROSS_ATTENTION,
     bool HAS_BEAMS>
-__global__ void masked_multihead_attention_kernel(Multihead_attention_params<T, DO_CROSS_ATTENTION> params)
+__global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<T> params)
 {
 
     using Tk = typename kernel_type_t<T>::Type;
