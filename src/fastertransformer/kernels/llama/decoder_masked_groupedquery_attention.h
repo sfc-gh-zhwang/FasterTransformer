@@ -27,7 +27,7 @@
 #include <stdlib.h>
 
 template<typename T>
-struct GroupedQuery_attention_params<T>: public Multihead_attention_params_base<T> {
+struct GroupedQuery_attention_params: public Multihead_attention_params_base<T> {
     // output cross attentions
     float* cross_attention_out        = nullptr;
     int    max_decoder_seq_len        = 0;
