@@ -1117,7 +1117,8 @@ template<
     bool HAS_BEAMS>
 __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<T> params)
 {
-
+    // TODO(zhwang): hacky
+    constexpr bool DO_CROSS_ATTENTION = false;
     using Tk = typename kernel_type_t<T>::Type;
 #ifdef ENABLE_FP8
     // FP8 MHA Scales
