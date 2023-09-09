@@ -393,7 +393,7 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:cutlass_heuristic>
   $<TARGET_OBJECTS:cutlass_preprocessors>
   $<TARGET_OBJECTS:decoder_masked_multihead_attention>
-  $<TARGET_OBJECTS:llama_decoder_masked_multihead_attention>
+  $<TARGET_OBJECTS:decoder_masked_groupedquery_attention>
   $<TARGET_OBJECTS:decoding_kernels>
   $<TARGET_OBJECTS:fpA_intB_gemm>
   $<TARGET_OBJECTS:gen_relative_pos_bias>
