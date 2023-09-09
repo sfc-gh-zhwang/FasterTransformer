@@ -41,7 +41,7 @@
 
 // !!! Specialize the launcher for Cross attention
 template<typename T, int Dh, int Dh_MAX, typename KERNEL_PARAMS_TYPE>
-void mmha_launch_kernel(const KERNEL_PARAMS_TYPE& params, const cudaStream_t& stream)
+void mgqa_launch_kernel(const KERNEL_PARAMS_TYPE& params, const cudaStream_t& stream)
 {
     constexpr int  THREADS_PER_VALUE  = threads_per_value_t<T, Dh_MAX>::value;
     constexpr bool DO_CROSS_ATTENTION = std::is_same<KERNEL_PARAMS_TYPE, Cross_multihead_attention_params<T>>::value;
@@ -72,29 +72,29 @@ void mmha_launch_kernel(const KERNEL_PARAMS_TYPE& params, const cudaStream_t& st
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-template void mmha_launch_kernel<float, 224, 256, Masked_multihead_attention_params<float>>(
+template void mgqa_launch_kernel<float, 224, 256, Masked_multihead_attention_params<float>>(
     const Masked_multihead_attention_params<float>& params, const cudaStream_t& stream);
-template void mmha_launch_kernel<uint16_t, 224, 256, Masked_multihead_attention_params<uint16_t>>(
+template void mgqa_launch_kernel<uint16_t, 224, 256, Masked_multihead_attention_params<uint16_t>>(
     const Masked_multihead_attention_params<uint16_t>& params, const cudaStream_t& stream);
 #ifdef ENABLE_BF16
-template void mmha_launch_kernel<__nv_bfloat16, 224, 256, Masked_multihead_attention_params<__nv_bfloat16>>(
+template void mgqa_launch_kernel<__nv_bfloat16, 224, 256, Masked_multihead_attention_params<__nv_bfloat16>>(
     const Masked_multihead_attention_params<__nv_bfloat16>& params, const cudaStream_t& stream);
 #endif
 #ifdef ENABLE_FP8
-template void mmha_launch_kernel<__nv_fp8_e4m3, 224, 256, Masked_multihead_attention_params<__nv_fp8_e4m3>>(
+template void mgqa_launch_kernel<__nv_fp8_e4m3, 224, 256, Masked_multihead_attention_params<__nv_fp8_e4m3>>(
     const Masked_multihead_attention_params<__nv_fp8_e4m3>& params, const cudaStream_t& stream);
 #endif
 
-template void mmha_launch_kernel<float, 224, 256, Cross_multihead_attention_params<float>>(
+template void mgqa_launch_kernel<float, 224, 256, Cross_multihead_attention_params<float>>(
     const Cross_multihead_attention_params<float>& params, const cudaStream_t& stream);
-template void mmha_launch_kernel<uint16_t, 224, 256, Cross_multihead_attention_params<uint16_t>>(
+template void mgqa_launch_kernel<uint16_t, 224, 256, Cross_multihead_attention_params<uint16_t>>(
     const Cross_multihead_attention_params<uint16_t>& params, const cudaStream_t& stream);
 #ifdef ENABLE_BF16
-template void mmha_launch_kernel<__nv_bfloat16, 224, 256, Cross_multihead_attention_params<__nv_bfloat16>>(
+template void mgqa_launch_kernel<__nv_bfloat16, 224, 256, Cross_multihead_attention_params<__nv_bfloat16>>(
     const Cross_multihead_attention_params<__nv_bfloat16>& params, const cudaStream_t& stream);
 #endif
 #ifdef ENABLE_FP8
-template void mmha_launch_kernel<__nv_fp8_e4m3, 224, 256, Cross_multihead_attention_params<__nv_fp8_e4m3>>(
+template void mgqa_launch_kernel<__nv_fp8_e4m3, 224, 256, Cross_multihead_attention_params<__nv_fp8_e4m3>>(
     const Cross_multihead_attention_params<__nv_fp8_e4m3>& params, const cudaStream_t& stream);
 #endif
 

@@ -1956,4 +1956,4 @@ struct threads_per_value_t<__nv_fp8_e4m3, Dh_MAX> {
 #endif
 
 template<typename T, int Dh, int Dh_MAX, typename KERNEL_PARAMS_TYPE>
-void mmha_launch_kernel(const KERNEL_PARAMS_TYPE& params, const cudaStream_t& stream);
+void mgqa_launch_kernel(const KERNEL_PARAMS_TYPE& params, const cudaStream_t& stream);
