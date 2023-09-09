@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/fastertransformer/kernels/llama/decoder_masked_multihead_attention.h"
-#include "src/fastertransformer/kernels/llama/decoder_masked_multihead_attention/decoder_masked_multihead_attention_template.hpp"
+#include "src/fastertransformer/kernels/decoder_masked_multihead_attention.h"
+#include "src/fastertransformer/kernels/decoder_masked_multihead_attention/decoder_masked_multihead_attention_template.hpp"
 #include "src/fastertransformer/kernels/decoder_masked_multihead_attention_utils.h"
 #include "src/fastertransformer/utils/cuda_bf16_wrapper.h"
 #include <assert.h>
@@ -66,35 +66,69 @@ void multihead_attention_(const KERNEL_PARAMS_TYPE& params, const cudaStream_t& 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void masked_multihead_attention(const Masked_llama_multihead_attention_params<float>& params, const cudaStream_t& stream)
+void masked_multihead_attention(const Masked_multihead_attention_params<float>& params, const cudaStream_t& stream)
 {
-    multihead_attention_<float, Masked_llama_multihead_attention_params<float>>(params, stream);
+    multihead_attention_<float, Masked_multihead_attention_params<float>>(params, stream);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void masked_multihead_attention(const Masked_llama_multihead_attention_params<uint16_t>& params, const cudaStream_t& stream)
+void masked_multihead_attention(const Masked_multihead_attention_params<uint16_t>& params, const cudaStream_t& stream)
 {
-    multihead_attention_<uint16_t, Masked_llama_multihead_attention_params<uint16_t>>(params, stream);
+    multihead_attention_<uint16_t, Masked_multihead_attention_params<uint16_t>>(params, stream);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ENABLE_BF16
-void masked_multihead_attention(const Masked_llama_multihead_attention_params<__nv_bfloat16>& params,
+void masked_multihead_attention(const Masked_multihead_attention_params<__nv_bfloat16>& params,
                                 const cudaStream_t&                                     stream)
 {
-    multihead_attention_<__nv_bfloat16, Masked_llama_multihead_attention_params<__nv_bfloat16>>(params, stream);
+    multihead_attention_<__nv_bfloat16, Masked_multihead_attention_params<__nv_bfloat16>>(params, stream);
 }
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ENABLE_FP8
-void masked_multihead_attention(const Masked_llama_multihead_attention_params<__nv_fp8_e4m3>& params,
+void masked_multihead_attention(const Masked_multihead_attention_params<__nv_fp8_e4m3>& params,
                                 const cudaStream_t&                                     stream)
 {
-    multihead_attention_<__nv_fp8_e4m3, Masked_llama_multihead_attention_params<__nv_fp8_e4m3>>(params, stream);
+    multihead_attention_<__nv_fp8_e4m3, Masked_multihead_attention_params<__nv_fp8_e4m3>>(params, stream);
+}
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cross_multihead_attention(const Cross_multihead_attention_params<float>& params, const cudaStream_t& stream)
+{
+    multihead_attention_<float, Cross_multihead_attention_params<float>>(params, stream);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cross_multihead_attention(const Cross_multihead_attention_params<uint16_t>& params, const cudaStream_t& stream)
+{
+    multihead_attention_<uint16_t, Cross_multihead_attention_params<uint16_t>>(params, stream);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ENABLE_BF16
+void cross_multihead_attention(const Cross_multihead_attention_params<__nv_bfloat16>& params,
+                               const cudaStream_t&                                    stream)
+{
+    multihead_attention_<__nv_bfloat16, Cross_multihead_attention_params<__nv_bfloat16>>(params, stream);
+}
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ENABLE_FP8
+void cross_multihead_attention(const Cross_multihead_attention_params<__nv_fp8_e4m3>& params,
+                               const cudaStream_t&                                    stream)
+{
+    multihead_attention_<__nv_fp8_e4m3, Cross_multihead_attention_params<__nv_fp8_e4m3>>(params, stream);
 }
 #endif
 
