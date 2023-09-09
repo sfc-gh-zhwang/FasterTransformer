@@ -28,14 +28,14 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void llama_masked_multihead_attention(const Masked_multihead_attention_params<float>& params, const cudaStream_t& stream);
-void llama_masked_multihead_attention(const Masked_multihead_attention_params<uint16_t>& params, const cudaStream_t& stream);
+void masked_groupedquery_attention(const Masked_multihead_attention_params<float>& params, const cudaStream_t& stream);
+void masked_groupedquery_attention(const Masked_multihead_attention_params<uint16_t>& params, const cudaStream_t& stream);
 #ifdef ENABLE_BF16
-void llama_masked_multihead_attention(const Masked_multihead_attention_params<__nv_bfloat16>& params,
+void masked_groupedquery_attention(const Masked_multihead_attention_params<__nv_bfloat16>& params,
                                 const cudaStream_t&                                     stream);
 #endif
 #ifdef ENABLE_FP8
-void llama_masked_multihead_attention(const Masked_multihead_attention_params<__nv_fp8_e4m3>& params,
+void masked_groupedquery_attention(const Masked_multihead_attention_params<__nv_fp8_e4m3>& params,
                                 const cudaStream_t&                                     stream);
 #endif
 
