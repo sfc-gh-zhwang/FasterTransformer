@@ -34,7 +34,7 @@ struct GroupedQuery_attention_params: public Multihead_attention_params_base<T> 
 };
 
 template<class T>
-using Masked_groupedquery_attention_params = Multihead_attention_params<T>;
+using Masked_groupedquery_attention_params = GroupedQuery_attention_params<T>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
