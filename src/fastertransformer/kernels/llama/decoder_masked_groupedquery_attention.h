@@ -28,19 +28,9 @@
 
 template<typename T>
 struct GroupedQuery_attention_params: public Multihead_attention_params_base<T> {
-    // output cross attentions
-    float* cross_attention_out        = nullptr;
-    int    max_decoder_seq_len        = 0;
-    bool   is_return_cross_attentions = false;
-
     // allows to exist attention eary
-    bool* finished = nullptr;
-
-    // required in case of cross attention
-    int* memory_length_per_sample = nullptr;
-
-    // required in case of masked attention with different length
-    const int* length_per_sample = nullptr;
+    bool* finished          = nullptr;
+    int   num_kv_heads      = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
