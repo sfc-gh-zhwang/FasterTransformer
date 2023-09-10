@@ -1147,8 +1147,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     if (sizeof(Tk) != 4) {
         // TODO - change to tlength
         const int max_timesteps = min(params.timestep, params.memory_max_len);
-        logits_smem_ +=
-            (DO_CROSS_ATTENTION) ? div_up(params.memory_max_len + 1, 4) * 16 : div_up(max_timesteps + 1, 4) * 16;
+        logits_smem_ += div_up(max_timesteps + 1, 4) * 16;
     }
     Tk* logits_smem = reinterpret_cast<Tk*>(logits_smem_);
 #else
@@ -1208,7 +1207,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     // The thread in the block.
     const int tidx = threadIdx.x;
 
-    const bool handle_kv = !DO_CROSS_ATTENTION || (DO_CROSS_ATTENTION && params.timestep == 0);
+    constexpr bool handle_kv = true;
 
     // While doing the product Q*K^T for the different keys we track the max.
     float qk_max = -FLT_MAX;
