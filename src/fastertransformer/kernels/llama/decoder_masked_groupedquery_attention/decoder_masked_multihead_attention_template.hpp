@@ -1209,6 +1209,8 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
 
     constexpr bool handle_kv = true;
 
+    // here.
+
     // While doing the product Q*K^T for the different keys we track the max.
     float qk_max = -FLT_MAX;
 
