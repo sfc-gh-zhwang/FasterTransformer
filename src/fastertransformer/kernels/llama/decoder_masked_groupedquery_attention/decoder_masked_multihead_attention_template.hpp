@@ -1372,12 +1372,6 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
         // Store the Q values to shared memory.
         *reinterpret_cast<Qk_vec_k*>(&q_smem[tidx * QK_VEC_SIZE]) = q;
 
-        // // Store Dh values of k_bias into smem, since will need to add later
-        // // if params.timestep == 0
-        // if (DO_CROSS_ATTENTION && params.timestep == 0) {
-        //     *reinterpret_cast<Qk_vec_k*>(&bias_smem[tidx * QK_VEC_SIZE]) = k_bias;
-        // }
-
         // Write the K values to the global memory cache.
         //
         // NOTE: The stores are uncoalesced as we have multiple chunks of 16B spread across the memory
