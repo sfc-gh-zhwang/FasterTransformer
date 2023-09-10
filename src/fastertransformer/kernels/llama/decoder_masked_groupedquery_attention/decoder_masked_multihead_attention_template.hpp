@@ -1116,8 +1116,6 @@ template<
     bool HAS_BEAMS>
 __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<T> params)
 {
-    // TODO(zhwang): hacky
-    constexpr bool DO_CROSS_ATTENTION = false;
     using Tk = typename kernel_type_t<T>::Type;
 #ifdef ENABLE_FP8
     // FP8 MHA Scales
@@ -1168,9 +1166,6 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     // Shared memory to store Q inputs.
     __shared__ __align__(sizeof(Qk_vec_k)) Tk q_smem[Dh_MAX];
 
-    // This is one of the reasons we should have a separate kernel for cross attention
-    __shared__ __align__(sizeof(Qk_vec_k)) Tk bias_smem[DO_CROSS_ATTENTION ? Dh_MAX : 1];
-
     // The number of elements per vector.
     constexpr int QK_VEC_SIZE = sizeof(Qk_vec_m) / sizeof(T);
     // Make sure the hidden size per head is a multiple of the vector size.
@@ -1220,9 +1215,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
 
     const size_t bi_seq_len_offset = bi * params.memory_max_len;
 
-    // int tlength = (DO_CROSS_ATTENTION)? params.memory_length_per_sample[bi] - 1 : params.timestep;
-    int       tlength      = (DO_CROSS_ATTENTION) ? params.memory_length_per_sample[bi] - 1 :
-                             (params.length_per_sample == nullptr) ?
+    int       tlength      = (params.length_per_sample == nullptr) ?
                                                     params.timestep :
                                                     params.length_per_sample[bi] + params.max_prefix_prompt_length;
     const int first_step   = max(0, tlength + 1 - params.memory_max_len);
