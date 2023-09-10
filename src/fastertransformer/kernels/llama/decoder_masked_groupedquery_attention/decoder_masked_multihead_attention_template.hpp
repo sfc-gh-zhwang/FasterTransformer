@@ -1469,14 +1469,6 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
         q_vec[ii] = *reinterpret_cast<const K_vec_k*>(&q_smem[ki + ii * THREADS_PER_KEY * K_VEC_SIZE]);
     }
 
-    K_vec_k k_bias_vec[DO_CROSS_ATTENTION ? K_VECS_PER_THREAD : 1];
-    if (DO_CROSS_ATTENTION && params.timestep == 0) {
-#pragma unroll
-        for (int ii = 0; ii < K_VECS_PER_THREAD; ++ii) {
-            k_bias_vec[ii] = *reinterpret_cast<const K_vec_k*>(&bias_smem[ki + ii * THREADS_PER_KEY * K_VEC_SIZE]);
-        }
-    }
-
     // The number of timesteps loaded per iteration.
     constexpr int K_PER_ITER = THREADS_PER_BLOCK / THREADS_PER_KEY;
     // The number of keys per warp.
@@ -1523,23 +1515,6 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
                     else {
                         k[ii] = vec_conversion<K_vec_k, K_vec_m>(
                             (*reinterpret_cast<const K_vec_m*>(&k_cache_batch[jj * QK_ELTS_IN_16B])));
-                    }
-                }
-                // add bias and update k_cache
-                if (DO_CROSS_ATTENTION && params.timestep == 0) {
-                    k[ii] = add(k[ii], k_bias_vec[ii]);
-
-                    if (do_ia3) {
-                        k[ii] = mul<K_vec_k, K_vec_k, K_vec_k>(
-                            k[ii],
-                            vec_conversion<K_vec_k, K_vec_m>(*reinterpret_cast<const K_vec_m*>(
-                                &params.ia3_key_weights[(ia3_task_id * params.num_heads + hi) * Dh + ki
-                                                        + ii * THREADS_PER_KEY * K_VEC_SIZE])));
-                    }
-
-                    if (Dh == Dh_MAX || jj * QK_ELTS_IN_16B < Dh * params.memory_max_len) {
-                        *reinterpret_cast<K_vec_m*>(&k_cache[jj * QK_ELTS_IN_16B]) =
-                            vec_conversion<K_vec_m, K_vec_k>(k[ii]);
                     }
                 }
             }
@@ -1634,16 +1609,8 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
 
     // Normalize the logits.
     float inv_sum = __fdividef(1.f, sum + 1.e-6f);
-    // for( int ti = tidx; ti <= params.timestep; ti += THREADS_PER_BLOCK ) {
-    const size_t cross_attention_out_offset =
-        params.is_return_cross_attentions ?
-            bhi * params.max_decoder_seq_len * params.memory_max_len + params.timestep * params.memory_max_len :
-            0;
     for (int ti = first_step + tidx; ti <= tlength; ti += THREADS_PER_BLOCK) {
         float logit = qk_smem[ti - first_step] * inv_sum;
-        if (params.is_return_cross_attentions) {
-            params.cross_attention_out[cross_attention_out_offset + ti] = logit;
-        }
         convert_from_float(logits_smem[ti - first_step], logit);
     }
 
@@ -1674,16 +1641,11 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     zero(v_bias);
     // if( vo == params.timestep % V_PER_ITER ) {
     if (Dh == Dh_MAX || vi < Dh) {
-        if (handle_kv) {
-            if (vo == tlength % V_PER_ITER) {
-                // Trigger the loads from the V bias buffer.
-                if (params.v_bias != nullptr) {
-                    v_bias = vec_conversion<V_vec_k, V_vec_m>(
-                        *reinterpret_cast<const V_vec_m*>(&params.v_bias[hi * Dh + vi]));
-                }
-                if (DO_CROSS_ATTENTION) {
-                    *reinterpret_cast<V_vec_m*>(&bias_smem[vi]) = vec_conversion<V_vec_m, V_vec_k>(v_bias);
-                }
+        if (vo == tlength % V_PER_ITER) {
+            // Trigger the loads from the V bias buffer.
+            if (params.v_bias != nullptr) {
+                v_bias = vec_conversion<V_vec_k, V_vec_m>(
+                    *reinterpret_cast<const V_vec_m*>(&params.v_bias[hi * Dh + vi]));
             }
         }
     }
@@ -1717,16 +1679,6 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
             // Load the values from the cache.
             V_vec_k v = vec_conversion<V_vec_k, V_vec_m>(
                 *reinterpret_cast<const V_vec_m*>(&v_cache_batch[beam_offset + ti * Dh]));
-            if (DO_CROSS_ATTENTION && params.timestep == 0) {
-                v = add(v, vec_conversion<V_vec_k, V_vec_m>(*reinterpret_cast<V_vec_m*>(&bias_smem[vi])));
-                if (do_ia3) {
-                    v = mul<V_vec_k, V_vec_k, V_vec_k>(
-                        v,
-                        *reinterpret_cast<const V_vec_k*>(
-                            &params.ia3_value_weights[(ia3_task_id * params.num_heads + hi) * Dh + vi]));
-                }
-                *reinterpret_cast<V_vec_m*>(&v_cache[ti * Dh]) = vec_conversion<V_vec_m, V_vec_k>(v);
-            }
             // Load the logits from shared memory.
 #if defined(MMHA_USE_FP32_ACUM_FOR_LOGITS)
             float logit = logits_smem[ti - first_step];
@@ -1763,16 +1715,6 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
             // Load the values from the cache.
             V_vec_k v = vec_conversion<V_vec_k, V_vec_m>(
                 *reinterpret_cast<const V_vec_m*>(&v_cache_batch[beam_offset + ti_circ * Dh]));
-            if (DO_CROSS_ATTENTION && params.timestep == 0) {
-                v = add(v, vec_conversion<V_vec_k, V_vec_m>(*reinterpret_cast<V_vec_m*>(&bias_smem[vi])));
-                if (do_ia3) {
-                    v = mul<V_vec_k, V_vec_k, V_vec_k>(
-                        v,
-                        *reinterpret_cast<const V_vec_k*>(
-                            &params.ia3_value_weights[(ia3_task_id * params.num_heads + hi) * Dh + vi]));
-                }
-                *reinterpret_cast<V_vec_m*>(&v_cache[ti * Dh]) = vec_conversion<V_vec_m, V_vec_k>(v);
-            }
             // Load the logits from shared memory.
 #if defined(MMHA_USE_FP32_ACUM_FOR_LOGITS)
             float logit = logits_smem[ti - first_step];
@@ -1803,43 +1745,36 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     if (vo == tlength % V_PER_ITER && (Dh == Dh_MAX || vi < Dh)) {
 
         V_vec_k v;
-        if (DO_CROSS_ATTENTION) {
-            v = vec_conversion<V_vec_k, V_vec_m>(*reinterpret_cast<const V_vec_m*>(&v_cache[tlength * Dh]));
+        // Trigger the loads from the V buffer.
+        const auto v_offset = qkv_base_offset + vi;
+        if (params.int8_mode == 2) {
+            using Packed_Int8_t  = typename packed_type<int8_t, num_elems<V_vec_k>::value>::type;
+            using Packed_Float_t = typename packed_type<float, num_elems<V_vec_k>::value>::type;
+            const auto v_scaling = params.qkv_scale_out[2];
+            const auto v_quant =
+                *reinterpret_cast<const Packed_Int8_t*>(&reinterpret_cast<const int8_t*>(params.v)[v_offset]);
+
+            convert_from_float(v, mul<Packed_Float_t, float>(v_scaling, float_from_int8(v_quant)));
         }
         else {
-            // Trigger the loads from the V buffer.
-            const auto v_offset = qkv_base_offset + vi;
-            if (params.int8_mode == 2) {
-                using Packed_Int8_t  = typename packed_type<int8_t, num_elems<V_vec_k>::value>::type;
-                using Packed_Float_t = typename packed_type<float, num_elems<V_vec_k>::value>::type;
-                const auto v_scaling = params.qkv_scale_out[2];
-                const auto v_quant =
-                    *reinterpret_cast<const Packed_Int8_t*>(&reinterpret_cast<const int8_t*>(params.v)[v_offset]);
-
-                convert_from_float(v, mul<Packed_Float_t, float>(v_scaling, float_from_int8(v_quant)));
-            }
-            else {
-                v = vec_conversion<V_vec_k, V_vec_m>(*reinterpret_cast<const V_vec_m*>(&params.v[v_offset]));
-            }
-            // Trigger the loads from the V bias buffer.
-            // V_vec v_bias = *reinterpret_cast<const V_vec*>(&params.v_bias[hi*Dh + vi]);
+            v = vec_conversion<V_vec_k, V_vec_m>(*reinterpret_cast<const V_vec_m*>(&params.v[v_offset]));
         }
+        // Trigger the loads from the V bias buffer.
+        // V_vec v_bias = *reinterpret_cast<const V_vec*>(&params.v_bias[hi*Dh + vi]);
 
         // Compute the V values with bias.
-        if (handle_kv) {
-            v = add(v, v_bias);
+        v = add(v, v_bias);
 
-            if (do_ia3) {
-                v = mul<V_vec_k, V_vec_k, V_vec_k>(
-                    v,
-                    *reinterpret_cast<const V_vec_k*>(
-                        &params.ia3_value_weights[(ia3_task_id * params.num_heads + hi) * Dh + vi]));
-            }
-
-            // Store the values with bias back to global memory in the cache for V.
-            //*reinterpret_cast<V_vec_k*>(&v_cache[params.timestep*Dh]) = v;
-            *reinterpret_cast<V_vec_m*>(&v_cache[tlength_circ * Dh]) = vec_conversion<V_vec_m, V_vec_k>(v);
+        if (do_ia3) {
+            v = mul<V_vec_k, V_vec_k, V_vec_k>(
+                v,
+                *reinterpret_cast<const V_vec_k*>(
+                    &params.ia3_value_weights[(ia3_task_id * params.num_heads + hi) * Dh + vi]));
         }
+
+        // Store the values with bias back to global memory in the cache for V.
+        //*reinterpret_cast<V_vec_k*>(&v_cache[params.timestep*Dh]) = v;
+        *reinterpret_cast<V_vec_m*>(&v_cache[tlength_circ * Dh]) = vec_conversion<V_vec_m, V_vec_k>(v);
 
         // Initialize the output value with the current timestep.
 #if defined(MMHA_USE_FP32_ACUM_FOR_LOGITS)
