@@ -1066,15 +1066,14 @@ inline size_t smem_size_in_bytes(const GroupedQuery_attention_params<T>&        
     using Tk = typename kernel_type_t<T>::Type;
     // The amount of shared memory needed to store the Q*K^T values in float.
     const int max_timesteps = min(params.timestep, params.memory_max_len);
-    size_t qk_sz = (DO_CROSS_ATTENTION) ? div_up(params.memory_max_len + 1, 4) * 16 : div_up(max_timesteps + 1, 4) * 16;
+    size_t qk_sz = div_up(max_timesteps + 1, 4) * 16;
 
     // The extra memory needed if we are not using floats for the final logits.
     size_t logits_sz = 0;
 #ifndef MMHA_USE_FP32_ACUM_FOR_LOGITS
     if (sizeof(Tk) != 4) {
         // TDOD
-        logits_sz = (DO_CROSS_ATTENTION) ? div_up(params.memory_max_len + 1, 4) * 4 * sizeof(Tk) :
-                                           div_up(max_timesteps + 1, 4) * 4 * sizeof(Tk);
+        logits_sz = div_up(max_timesteps + 1, 4) * 4 * sizeof(Tk);
     }
 #endif
 
