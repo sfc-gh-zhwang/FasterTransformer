@@ -33,7 +33,6 @@
                                             Dh_MAX,                                                                    \
                                             THDS_PER_KEY,                                                              \
                                             THDS_PER_VALUE,                                                            \
-                                            DO_CROSS_ATTENTION,                                                        \
                                             HAS_BEAMS><<<grid, THDS_PER_BLOCK, smem_sz, stream>>>(params)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
