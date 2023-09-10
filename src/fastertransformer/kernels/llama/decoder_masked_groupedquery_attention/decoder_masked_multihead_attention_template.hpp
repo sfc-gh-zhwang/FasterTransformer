@@ -1259,35 +1259,19 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
 
     Qk_vec_k k;
     zero(k);
-    if (DO_CROSS_ATTENTION) {
-        // The 16B chunk written by the thread.
-        int co = tidx / QK_VECS_IN_16B;
-        // The position of the thread in that 16B chunk.
-        int ci = tidx % QK_VECS_IN_16B * QK_VEC_SIZE;
+    if (params.int8_mode == 2) {
+        using Packed_Int8_t  = typename packed_type<int8_t, num_elems<Qk_vec_m>::value>::type;
+        using Packed_Float_t = typename packed_type<float, num_elems<Qk_vec_m>::value>::type;
+        const auto k_scaling = params.qkv_scale_out[1];
+        const auto k_quant =
+            *reinterpret_cast<const Packed_Int8_t*>(&reinterpret_cast<const int8_t*>(params.k)[qk_offset]);
 
-        // Two chunks are separated by L * x elements. A thread write QK_VEC_SIZE elements.
-        int offset = bhi * params.memory_max_len * Dh + co * params.memory_max_len * QK_ELTS_IN_16B +
-                     // params.timestep*QK_ELTS_IN_16B +
-                     tlength * QK_ELTS_IN_16B + ci;
-        k = !is_masked && (Dh == Dh_MAX || tidx * QK_VEC_SIZE < Dh) ?
-                vec_conversion<Qk_vec_k, Qk_vec_m>(*reinterpret_cast<const Qk_vec_m*>(&params.k_cache[offset])) :
-                k;
+        convert_from_float(k, mul<Packed_Float_t, float>(k_scaling, float_from_int8(k_quant)));
     }
     else {
-        if (params.int8_mode == 2) {
-            using Packed_Int8_t  = typename packed_type<int8_t, num_elems<Qk_vec_m>::value>::type;
-            using Packed_Float_t = typename packed_type<float, num_elems<Qk_vec_m>::value>::type;
-            const auto k_scaling = params.qkv_scale_out[1];
-            const auto k_quant =
-                *reinterpret_cast<const Packed_Int8_t*>(&reinterpret_cast<const int8_t*>(params.k)[qk_offset]);
-
-            convert_from_float(k, mul<Packed_Float_t, float>(k_scaling, float_from_int8(k_quant)));
-        }
-        else {
-            k = !is_masked && (Dh == Dh_MAX || tidx * QK_VEC_SIZE < Dh) ?
-                    vec_conversion<Qk_vec_k, Qk_vec_m>(*reinterpret_cast<const Qk_vec_m*>(&params.k[qk_offset])) :
-                    k;
-        }
+        k = !is_masked && (Dh == Dh_MAX || tidx * QK_VEC_SIZE < Dh) ?
+                vec_conversion<Qk_vec_k, Qk_vec_m>(*reinterpret_cast<const Qk_vec_m*>(&params.k[qk_offset])) :
+                k;
     }
 
     // Trigger the loads from the Q and K bias buffers.
@@ -1388,11 +1372,11 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
         // Store the Q values to shared memory.
         *reinterpret_cast<Qk_vec_k*>(&q_smem[tidx * QK_VEC_SIZE]) = q;
 
-        // Store Dh values of k_bias into smem, since will need to add later
-        // if params.timestep == 0
-        if (DO_CROSS_ATTENTION && params.timestep == 0) {
-            *reinterpret_cast<Qk_vec_k*>(&bias_smem[tidx * QK_VEC_SIZE]) = k_bias;
-        }
+        // // Store Dh values of k_bias into smem, since will need to add later
+        // // if params.timestep == 0
+        // if (DO_CROSS_ATTENTION && params.timestep == 0) {
+        //     *reinterpret_cast<Qk_vec_k*>(&bias_smem[tidx * QK_VEC_SIZE]) = k_bias;
+        // }
 
         // Write the K values to the global memory cache.
         //
