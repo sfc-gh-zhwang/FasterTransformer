@@ -1197,7 +1197,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     const int hi = blockIdx.x;
     // Combine the batch and the head indices.
     const int bhi = bi * params.num_heads + hi;
-    printf("%d\n", bhi);
+    printf("%d %d %d\n", bi, params.num_heads, hi);
     // Combine the "beam-aware" batch idx and the head indices.
     const int bbhi = bbi * params.beam_width * params.num_heads + hi;
     // The thread in the block.
