@@ -1670,7 +1670,8 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
         for (int ti = first_step + vo; ti < min_length; ti += V_PER_ITER) {
             // Fetch offset based on cache_indir when beam sampling
             const int beam_src    = HAS_BEAMS ? params.cache_indir[bi_seq_len_offset + ti] : 0;
-            const int beam_offset = HAS_BEAMS ? beam_src * params.num_heads * params.memory_max_len * Dh : 0;
+            // const int beam_offset = HAS_BEAMS ? beam_src * params.num_heads * params.memory_max_len * Dh : 0;
+            const int beam_offset = HAS_BEAMS ? beam_src * params.num_kv_heads * params.memory_max_len * Dh : 0;
             // Load the values from the cache.
             V_vec_k v = vec_conversion<V_vec_k, V_vec_m>(
                 *reinterpret_cast<const V_vec_m*>(&v_cache_batch[beam_offset + ti * Dh]));
@@ -1706,7 +1707,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
 
             // Fetch offset based on cache_indir when beam sampling
             const int beam_src    = HAS_BEAMS ? params.cache_indir[bi_seq_len_offset + ti_circ] : 0;
-            const int beam_offset = HAS_BEAMS ? beam_src * params.num_heads * params.memory_max_len * Dh : 0;
+            const int beam_offset = HAS_BEAMS ? beam_src * params.num_kv_heads * params.memory_max_len * Dh : 0;
             // Load the values from the cache.
             V_vec_k v = vec_conversion<V_vec_k, V_vec_m>(
                 *reinterpret_cast<const V_vec_m*>(&v_cache_batch[beam_offset + ti_circ * Dh]));
