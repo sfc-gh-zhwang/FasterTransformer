@@ -1197,6 +1197,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     const int head_n_rep = 1;
     // The head.
     const int hi    = blockIdx.x;
+    printf("%d \n", hi)
     const int kvhi  = hi / head_n_rep;
     // Combine the batch and the head indices.
     const int bhi   = bi * params.num_heads + hi;
