@@ -1195,11 +1195,14 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     const int bbi = bi / params.beam_width;
     const int head_n_rep = params.num_heads / params.num_kv_heads;
     // The head.
-    const int hi = blockIdx.x;
+    const int hi    = blockIdx.x;
+    const int kvhi  = hi / head_n_rep;
     // Combine the batch and the head indices.
-    const int bhi = bi * params.num_heads + hi;
+    const int bhi   = bi * params.num_heads + hi;
+    const int bkvhi = bi * params.num_kv_heads + kvhi;
     // Combine the "beam-aware" batch idx and the head indices.
-    const int bbhi = bbi * params.beam_width * params.num_heads + hi;
+    const int bbhi      = bbi * params.beam_width * params.num_heads + hi;
+    const int bbkvhi    = bbi * params.beam_width * params.num_kv_heads + kvhi;
     // The thread in the block.
     const int tidx = threadIdx.x;
 
@@ -1386,7 +1389,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
         if (handle_kv) {
             // Trigger the stores to global memory.
             if (Dh == Dh_MAX || co < Dh / QK_ELTS_IN_16B) {
-                *reinterpret_cast<Qk_vec_m*>(&params.k_cache[offset]) = vec_conversion<Qk_vec_m, Qk_vec_k>(k);
+                *reinterpret_cast<Qk_vec_m*>(&params.k_cache[offset/params.num_kv_heads]) = vec_conversion<Qk_vec_m, Qk_vec_k>(k);
             }
         }
 
@@ -1463,9 +1466,9 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     constexpr int K_PER_WARP = WARP_SIZE / THREADS_PER_KEY;
 
     // The base pointer for the key in the cache buffer.
-    T* k_cache = &params.k_cache[bhi * params.memory_max_len * Dh + ki];
+    T* k_cache = &params.k_cache[(bhi * params.memory_max_len * Dh + ki)/params.num_kv_heads];
     // Base pointer for the beam's batch, before offsetting with indirection buffer
-    T* k_cache_batch = &params.k_cache[bbhi * params.memory_max_len * Dh + ki];
+    T* k_cache_batch = &params.k_cache[(bbhi * params.memory_max_len * Dh + ki)/params.num_kv_heads];
 
     // Pick a number of keys to make sure all the threads of a warp enter (due to shfl_sync).
     // int ti_end = div_up(params.timestep, K_PER_WARP) * K_PER_WARP;
@@ -1498,11 +1501,11 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
                     if (HAS_BEAMS) {
                         const int beam_offset = beam_indices[ti_circ] * params.num_heads * params.memory_max_len * Dh;
                         k[ii]                 = vec_conversion<K_vec_k, K_vec_m>(
-                            (*reinterpret_cast<const K_vec_m*>(&k_cache_batch[beam_offset + jj * QK_ELTS_IN_16B])));
+                            (*reinterpret_cast<const K_vec_m*>(&k_cache_batch[(beam_offset + jj * QK_ELTS_IN_16B)/params.num_kv_heads])));
                     }
                     else {
                         k[ii] = vec_conversion<K_vec_k, K_vec_m>(
-                            (*reinterpret_cast<const K_vec_m*>(&k_cache_batch[jj * QK_ELTS_IN_16B])));
+                            (*reinterpret_cast<const K_vec_m*>(&k_cache_batch[(jj * QK_ELTS_IN_16B)/params.num_kv_heads])));
                     }
                 }
             }
@@ -1617,9 +1620,9 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     int vi = tidx % THREADS_PER_VALUE * V_VEC_SIZE;
 
     // The base pointer for the value in the cache buffer.
-    T* v_cache = &params.v_cache[bhi * params.memory_max_len * Dh + vi];
+    T* v_cache = &params.v_cache[(bhi * params.memory_max_len * Dh + vi)/params.num_kv_heads];
     // Base pointer for the beam's batch, before offsetting with indirection buffer
-    T* v_cache_batch = &params.v_cache[bbhi * params.memory_max_len * Dh + vi];
+    T* v_cache_batch = &params.v_cache[(bbhi * params.memory_max_len * Dh + vi)/params.num_kv_heads];
 
     // The number of values processed per iteration of the loop.
     constexpr int V_PER_ITER = THREADS_PER_BLOCK / THREADS_PER_VALUE;
@@ -1666,7 +1669,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
             const int beam_offset = HAS_BEAMS ? beam_src * params.num_heads * params.memory_max_len * Dh : 0;
             // Load the values from the cache.
             V_vec_k v = vec_conversion<V_vec_k, V_vec_m>(
-                *reinterpret_cast<const V_vec_m*>(&v_cache_batch[beam_offset + ti * Dh]));
+                *reinterpret_cast<const V_vec_m*>(&v_cache_batch[(beam_offset + ti * Dh)/params.num_kv_heads]));
             // Load the logits from shared memory.
 #if defined(MMHA_USE_FP32_ACUM_FOR_LOGITS)
             float logit = logits_smem[ti - first_step];
@@ -1702,7 +1705,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
             const int beam_offset = HAS_BEAMS ? beam_src * params.num_heads * params.memory_max_len * Dh : 0;
             // Load the values from the cache.
             V_vec_k v = vec_conversion<V_vec_k, V_vec_m>(
-                *reinterpret_cast<const V_vec_m*>(&v_cache_batch[beam_offset + ti_circ * Dh]));
+                *reinterpret_cast<const V_vec_m*>(&v_cache_batch[(beam_offset + ti_circ * Dh)/params.num_kv_heads]));
             // Load the logits from shared memory.
 #if defined(MMHA_USE_FP32_ACUM_FOR_LOGITS)
             float logit = logits_smem[ti - first_step];
@@ -1762,7 +1765,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
 
         // Store the values with bias back to global memory in the cache for V.
         //*reinterpret_cast<V_vec_k*>(&v_cache[params.timestep*Dh]) = v;
-        *reinterpret_cast<V_vec_m*>(&v_cache[tlength_circ * Dh]) = vec_conversion<V_vec_m, V_vec_k>(v);
+        *reinterpret_cast<V_vec_m*>(&v_cache[(tlength_circ * Dh)/params.num_kv_heads]) = vec_conversion<V_vec_m, V_vec_k>(v);
 
         // Initialize the output value with the current timestep.
 #if defined(MMHA_USE_FP32_ACUM_FOR_LOGITS)
