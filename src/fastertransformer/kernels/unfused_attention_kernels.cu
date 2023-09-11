@@ -1700,19 +1700,15 @@ __global__ void transpose_4d_batch_major_k_cache(
 
 template<typename T>
 __global__ void transpose_4d_batch_major_k_cache(
-    T* k_dst, const T* k_src, const int head_num, const int kv_head_num, const int size_per_head, const int seq_len, const int max_seq_len)
+    T* k_dst, const T* k_src, const int head_n_rep, const int kv_head_num, const int size_per_head, const int seq_len, const int max_seq_len)
 {
     const int     batch_id      = blockIdx.y;
     const int     head_id       = blockIdx.z;
     constexpr int X_ELEMS       = (sizeof(T) == 4) ? 4 : 8;
-    const int     head_n_rep    = head_num / kv_head_num;
-    if (head_id % head_n_rep != 0) {
-        return;
-    }
-    auto key_src = reinterpret_cast<const uint4*>(k_src + batch_id * head_num * size_per_head * seq_len
-                                                  + head_id * size_per_head * seq_len);
+    auto key_src = reinterpret_cast<const uint4*>(k_src + batch_id * head_n_rep * kv_head_num * size_per_head * seq_len
+                                                  + head_id * head_n_rep * size_per_head * seq_len);
     auto key_dst = reinterpret_cast<uint4*>(k_dst + batch_id * kv_head_num * size_per_head * max_seq_len
-                                            + head_id / head_n_rep * size_per_head * max_seq_len);
+                                            + head_id * size_per_head * max_seq_len);
 
     const int out_idx             = blockIdx.x * blockDim.x + threadIdx.x;
     int       size_per_head_div_x = size_per_head / X_ELEMS;
@@ -1758,21 +1754,16 @@ __global__ void transpose_4d_batch_major_v_cache(
 
 template<typename T>
 __global__ void transpose_4d_batch_major_v_cache(
-    T* v_dst, const T* v_src, const int head_num, const int kv_head_num, const int size_per_head, const int seq_len, const int max_seq_len)
+    T* v_dst, const T* v_src, const int head_n_rep, const int kv_head_num, const int size_per_head, const int seq_len, const int max_seq_len)
 {
     const int batch_id      = blockIdx.y;
     const int head_id       = blockIdx.z;
-    const int head_n_rep    = head_num / kv_head_num;
-
-    if (head_n_rep % head_n_rep != 0) {
-        return;
-    }
 
     // 16 byte loads will handle "x" dimension
-    auto val_src = reinterpret_cast<const uint4*>(v_src + batch_id * head_num * size_per_head * seq_len
-                                                  + head_id * size_per_head * seq_len);
+    auto val_src = reinterpret_cast<const uint4*>(v_src + batch_id * kv_head_num * head_n_rep * size_per_head * seq_len
+                                                  + head_id * head_n_rep * size_per_head * seq_len);
     auto val_dst = reinterpret_cast<uint4*>(v_dst + batch_id * kv_head_num * size_per_head * max_seq_len
-                                            + head_id / head_n_rep * size_per_head * max_seq_len);
+                                            + head_id * size_per_head * max_seq_len);
 
     // idx is over output dimension L * size_per_head / x for values
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -1825,17 +1816,18 @@ void invokeTranspose4dBatchMajor(T*           k_dst,
                                  const int    local_kv_head_num,
                                  cudaStream_t stream)
 {
-    constexpr int block_sz = 128;
-    constexpr int x        = (sizeof(T) == 4) ? 4 : 8;
-    int           size     = max_seq_len * size_per_head / x;
-    dim3          grid((size + block_sz - 1) / block_sz, local_batch_size, local_head_num);
-    dim3          grid_v((seq_len * size_per_head / x + block_sz - 1) / block_sz, local_batch_size, local_head_num);
+    constexpr int block_sz      = 128;
+    constexpr int x             = (sizeof(T) == 4) ? 4 : 8;
+    int           size          = max_seq_len * size_per_head / x;
+    int           head_n_rep    = head_num / kv_head_num;
+    dim3          grid((size + block_sz - 1) / block_sz, local_batch_size, local_kv_head_num);
+    dim3          grid_v((seq_len * size_per_head / x + block_sz - 1) / block_sz, local_batch_size, local_kv_head_num);
 
     transpose_4d_batch_major_k_cache<<<grid, block_sz, 0, stream>>>(
-        k_dst, k_src, local_head_num, local_kv_head_num, size_per_head, seq_len, max_seq_len);
+        k_dst, k_src, head_n_rep, local_kv_head_num, size_per_head, seq_len, max_seq_len);
 
     transpose_4d_batch_major_v_cache<<<grid_v, block_sz, 0, stream>>>(
-        v_dst, v_src, local_head_num, local_kv_head_num, size_per_head, seq_len, max_seq_len);
+        v_dst, v_src, head_n_rep, local_kv_head_num, size_per_head, seq_len, max_seq_len);
 }
 
 #define INSTANTIATETRANSPOSE4DBATCHMAJOR(T)                                                                            \
