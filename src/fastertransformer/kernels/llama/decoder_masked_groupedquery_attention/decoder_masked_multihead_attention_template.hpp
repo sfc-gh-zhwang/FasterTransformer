@@ -1621,9 +1621,9 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     int vi = tidx % THREADS_PER_VALUE * V_VEC_SIZE;
     printf("%d\n", vi);
     // The base pointer for the value in the cache buffer.
-    T* v_cache = &params.v_cache[(bhi * params.memory_max_len * Dh + vi)/head_n_rep];
+    T* v_cache = &params.v_cache[(bhi * params.memory_max_len * Dh + vi/8)/head_n_rep];
     // Base pointer for the beam's batch, before offsetting with indirection buffer
-    T* v_cache_batch = &params.v_cache[(bbhi * params.memory_max_len * Dh + vi)/head_n_rep];
+    T* v_cache_batch = &params.v_cache[(bbhi * params.memory_max_len * Dh + vi/8)/head_n_rep];
 
     // The number of values processed per iteration of the loop.
     constexpr int V_PER_ITER = THREADS_PER_BLOCK / THREADS_PER_VALUE;
@@ -1670,7 +1670,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
             const int beam_offset = HAS_BEAMS ? beam_src * params.num_heads * params.memory_max_len * Dh : 0;
             // Load the values from the cache.
             V_vec_k v = vec_conversion<V_vec_k, V_vec_m>(
-                *reinterpret_cast<const V_vec_m*>(&v_cache_batch[(beam_offset + ti * Dh)/head_n_rep]));
+                *reinterpret_cast<const V_vec_m*>(&v_cache_batch[(beam_offset + ti * Dh / 8)/head_n_rep]));
             // Load the logits from shared memory.
 #if defined(MMHA_USE_FP32_ACUM_FOR_LOGITS)
             float logit = logits_smem[ti - first_step];
