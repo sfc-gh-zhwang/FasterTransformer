@@ -1390,7 +1390,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
         if (handle_kv) {
             // Trigger the stores to global memory.
             if (Dh == Dh_MAX || co < Dh / QK_ELTS_IN_16B) {
-                *reinterpret_cast<Qk_vec_m*>(&params.k_cache[offset]) = vec_conversion<Qk_vec_m, Qk_vec_k>(k);
+                *reinterpret_cast<Qk_vec_m*>(&params.k_cache[offset/8]) = vec_conversion<Qk_vec_m, Qk_vec_k>(k);
             }
         }
 
