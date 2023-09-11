@@ -1223,7 +1223,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     int       tlength      = (params.length_per_sample == nullptr) ?
                                                     params.timestep :
                                                     params.length_per_sample[bi] + params.max_prefix_prompt_length;
-    printf("%d\n", tlength);
+    printf("%d %d\n", tlength, params.memory_max_len);
     const int first_step   = max(0, tlength + 1 - params.memory_max_len);
     const int tlength_circ = tlength % params.memory_max_len;
 
