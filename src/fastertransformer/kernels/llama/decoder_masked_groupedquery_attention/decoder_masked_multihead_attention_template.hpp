@@ -1624,7 +1624,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     // The hidden dimensions computed by this particular thread.
     int vi = tidx % THREADS_PER_VALUE * V_VEC_SIZE;
     // The base pointer for the value in the cache buffer.
-    if (bhi == 0) {
+    if (bkvhi == 63) {
         printf("%d %d %d %d %d\n", bkvhi, params.memory_max_len, Dh, vi, (bkvhi * params.memory_max_len * Dh + vi));
     }
     T* v_cache = &params.v_cache[bkvhi * params.memory_max_len * Dh + vi];
