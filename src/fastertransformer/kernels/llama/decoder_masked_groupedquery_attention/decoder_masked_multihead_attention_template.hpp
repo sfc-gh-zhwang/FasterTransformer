@@ -1624,7 +1624,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     // The hidden dimensions computed by this particular thread.
     int vi = tidx % THREADS_PER_VALUE * V_VEC_SIZE;
     // The base pointer for the value in the cache buffer.
-    printf("%d %d %d %d", tidx, THREADS_PER_VALUE, V_VEC_SIZE, vi);
+    printf("%d %d %d %d\n", tidx, THREADS_PER_VALUE, V_VEC_SIZE, vi);
     T* v_cache = &params.v_cache[bkvhi * params.memory_max_len * Dh + vi];
     // Base pointer for the beam's batch, before offsetting with indirection buffer
     T* v_cache_batch = &params.v_cache[bbkvhi * params.memory_max_len * Dh + vi];
