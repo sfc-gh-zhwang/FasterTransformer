@@ -1193,8 +1193,8 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     const int beami = bi % params.beam_width;
     // The "beam-aware" batch idx
     const int bbi = bi / params.beam_width;
-    // const int head_n_rep = params.num_heads / params.num_kv_heads;
-    const int head_n_rep = 1;
+    const int head_n_rep = params.num_heads / params.num_kv_heads;
+    // const int head_n_rep = 1;
     // The head.
     const int hi    = blockIdx.x;
     const int kvhi  = hi / head_n_rep;
@@ -1387,7 +1387,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
                      // params.timestep*QK_ELTS_IN_16B +
                      tlength_circ * QK_ELTS_IN_16B + ci;
 
-        if (handle_kv) {
+        if (handle_kv && bhi%head_n_rep==0) {
             // Trigger the stores to global memory.
             if (Dh == Dh_MAX || co < Dh / QK_ELTS_IN_16B) {
                 *reinterpret_cast<Qk_vec_m*>(&params.k_cache[offset/8]) = vec_conversion<Qk_vec_m, Qk_vec_k>(k);
