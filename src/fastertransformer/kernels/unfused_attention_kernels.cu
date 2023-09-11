@@ -1828,8 +1828,8 @@ void invokeTranspose4dBatchMajor(T*           k_dst,
     constexpr int block_sz = 128;
     constexpr int x        = (sizeof(T) == 4) ? 4 : 8;
     int           size     = max_seq_len * size_per_head / x;
-    dim3          grid((size + block_sz - 1) / block_sz, local_batch_size, local_kv_head_num);
-    dim3          grid_v((seq_len * size_per_head / x + block_sz - 1) / block_sz, local_batch_size, local_kv_head_num);
+    dim3          grid((size + block_sz - 1) / block_sz, local_batch_size, local_head_num);
+    dim3          grid_v((seq_len * size_per_head / x + block_sz - 1) / block_sz, local_batch_size, local_head_num);
 
     transpose_4d_batch_major_k_cache<<<grid, block_sz, 0, stream>>>(
         k_dst, k_src, local_head_num, local_kv_head_num, size_per_head, seq_len, max_seq_len);
