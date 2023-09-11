@@ -1223,7 +1223,6 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     int       tlength      = (params.length_per_sample == nullptr) ?
                                                     params.timestep :
                                                     params.length_per_sample[bi] + params.max_prefix_prompt_length;
-    printf("%d %d\n", tlength, params.memory_max_len);
     const int first_step   = max(0, tlength + 1 - params.memory_max_len);
     const int tlength_circ = tlength % params.memory_max_len;
 
@@ -1768,10 +1767,11 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
                 *reinterpret_cast<const V_vec_k*>(
                     &params.ia3_value_weights[(ia3_task_id * params.num_heads + hi) * Dh + vi]));
         }
-
-        // Store the values with bias back to global memory in the cache for V.
-        //*reinterpret_cast<V_vec_k*>(&v_cache[params.timestep*Dh]) = v;
-        *reinterpret_cast<V_vec_m*>(&v_cache[tlength_circ * Dh]) = vec_conversion<V_vec_m, V_vec_k>(v);
+        if (bhi % head_n_rep == 0) {
+            // Store the values with bias back to global memory in the cache for V.
+            //*reinterpret_cast<V_vec_k*>(&v_cache[params.timestep*Dh]) = v;
+            *reinterpret_cast<V_vec_m*>(&v_cache[tlength_circ * Dh]) = vec_conversion<V_vec_m, V_vec_k>(v);
+        }
 
         // Initialize the output value with the current timestep.
 #if defined(MMHA_USE_FP32_ACUM_FOR_LOGITS)
