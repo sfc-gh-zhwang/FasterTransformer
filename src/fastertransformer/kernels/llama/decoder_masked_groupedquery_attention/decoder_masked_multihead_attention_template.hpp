@@ -1383,6 +1383,9 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
         int ci = tidx % QK_VECS_IN_16B * QK_VEC_SIZE;
 
         // Two chunks are separated by L * x elements. A thread write QK_VEC_SIZE elements.
+        // int offset = bhi * params.memory_max_len * Dh + co * params.memory_max_len * QK_ELTS_IN_16B +
+        //              // params.timestep*QK_ELTS_IN_16B +
+        //              tlength_circ * QK_ELTS_IN_16B + ci;
         int offset = bkvhi * params.memory_max_len * Dh + co * params.memory_max_len * QK_ELTS_IN_16B +
                      // params.timestep*QK_ELTS_IN_16B +
                      tlength_circ * QK_ELTS_IN_16B + ci;
