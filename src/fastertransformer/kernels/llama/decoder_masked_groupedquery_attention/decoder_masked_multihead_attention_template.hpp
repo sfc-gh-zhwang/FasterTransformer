@@ -1194,7 +1194,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     // The "beam-aware" batch idx
     const int bbi = bi / params.beam_width;
     // const int head_n_rep = params.num_heads / params.num_kv_heads;
-    const int head_n_rep = 1
+    const int head_n_rep = 1;
     // The head.
     const int hi    = blockIdx.x;
     const int kvhi  = hi / head_n_rep;
