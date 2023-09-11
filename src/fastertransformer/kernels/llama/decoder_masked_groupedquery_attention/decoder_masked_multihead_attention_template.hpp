@@ -1467,7 +1467,7 @@ __global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<
     constexpr int K_PER_WARP = WARP_SIZE / THREADS_PER_KEY;
 
     // The base pointer for the key in the cache buffer.
-    T* k_cache = &params.k_cache[bhi * params.memory_max_len * Dh + ki)];
+    T* k_cache = &params.k_cache[bhi * params.memory_max_len * Dh + ki];
     // Base pointer for the beam's batch, before offsetting with indirection buffer
     T* k_cache_batch = &params.k_cache[bbhi * params.memory_max_len * Dh + ki];
 
