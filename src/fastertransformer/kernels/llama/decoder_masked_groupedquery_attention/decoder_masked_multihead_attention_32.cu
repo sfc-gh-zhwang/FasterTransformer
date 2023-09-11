@@ -24,7 +24,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define MMHA_LAUNCH_KERNEL(                                                                                            \
+#define MGQA_LAUNCH_KERNEL(                                                                                            \
     T, Dh, Dh_MAX, THDS_PER_KEY, THDS_PER_VALUE, THDS_PER_BLOCK, HAS_BEAMS, stream)                \
     size_t smem_sz = mmha::smem_size_in_bytes<T>(params, THDS_PER_VALUE, THDS_PER_BLOCK);          \
     dim3   grid(params.num_heads, params.batch_size);                                                                  \
@@ -48,24 +48,24 @@ void mgqa_launch_kernel(const KERNEL_PARAMS_TYPE& params, const cudaStream_t& st
     int            tlength            = (DO_CROSS_ATTENTION) ? params.memory_max_len : params.timestep;
     if (params.cache_indir == nullptr) {
         if (tlength < 32) {
-            MMHA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 4, THREADS_PER_VALUE, 64, false, stream);
+            MGQA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 4, THREADS_PER_VALUE, 64, false, stream);
         }
         else if (tlength < 2048) {
-            MMHA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 2, THREADS_PER_VALUE, 128, false, stream);
+            MGQA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 2, THREADS_PER_VALUE, 128, false, stream);
         }
         else {
-            MMHA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 1, THREADS_PER_VALUE, 256, false, stream);
+            MGQA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 1, THREADS_PER_VALUE, 256, false, stream);
         }
     }
     else {
         if (tlength < 32) {
-            MMHA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 4, THREADS_PER_VALUE, 64, true, stream);
+            MGQA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 4, THREADS_PER_VALUE, 64, true, stream);
         }
         else if (tlength < 2048) {
-            MMHA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 2, THREADS_PER_VALUE, 128, true, stream);
+            MGQA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 2, THREADS_PER_VALUE, 128, true, stream);
         }
         else {
-            MMHA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 1, THREADS_PER_VALUE, 256, true, stream);
+            MGQA_LAUNCH_KERNEL(T, Dh, Dh_MAX, 1, THREADS_PER_VALUE, 256, true, stream);
         }
     }
 }
@@ -85,4 +85,4 @@ template void mgqa_launch_kernel<__nv_fp8_e4m3, 32, 32, GroupedQuery_attention_p
     const GroupedQuery_attention_params<__nv_fp8_e4m3>& params, const cudaStream_t& stream);
 #endif
 
-#undef MMHA_LAUNCH_KERNEL
+#undef MGQA_LAUNCH_KERNEL
