@@ -303,7 +303,7 @@ int main(int argc, char* argv[])
         by MPI or triton
     */
 
-    MPICHECK(MPI_Init(&argc, &argv));
+    // MPICHECK(MPI_Init(&argc, &argv));
     ft::mpi::initialize(&argc, &argv);
     int node_id  = ft::mpi::getCommWorldRank();
     int node_num = ft::mpi::getCommWorldSize();
@@ -311,8 +311,9 @@ int main(int argc, char* argv[])
 
     // Note: Only supports that all nodes have same gpu count
     const int   gpu_count  = ft::getDeviceCount();
+    std::cout << "gpu_count: " << gpu_count << std::endl;
     const int   world_size = node_num * gpu_count;
-    std::string ini_name   = argc >= 2 ? std::string(argv[1]) : "../examples/cpp/llama/llama_config.ini";
+    std::string ini_name   = argc >= 2 ? std::string(argv[1]) : "/notebooks/FasterTransformer/examples/cpp/llama/llama_config.ini";
 
     // step 1: Create model
     std::shared_ptr<AbstractTransformerModel> model            = AbstractTransformerModel::createLlamaModel(ini_name);
@@ -376,6 +377,7 @@ int main(int argc, char* argv[])
     const int  batch_size   = output_tensors_lists[0].get()->at("output_ids").shape[0];
     const int  beam_width   = output_tensors_lists[0].get()->at("output_ids").shape[1];
     const int  seq_len      = output_tensors_lists[0].get()->at("output_ids").shape[2];
+    const int* d_input_lengths = (const int*)output_tensors_lists[0].get()->at("input_lengths").data;
     // step 6: check results
     if (node_id == 0) {
 
@@ -387,11 +389,18 @@ int main(int argc, char* argv[])
         else {
             size_t outCount = batch_size * beam_width * seq_len;
             int*   hBuf     = new int[outCount];
+            int*   iBuf     = new int[batch_size];
             ft::cudaD2Hcpy(hBuf, d_output_ids, outCount);
+            ft::cudaD2Hcpy(iBuf, d_input_lengths, batch_size);
+            
 
             {
                 std::cout << "Writing " << outCount << " elements\n";
                 int zeroCount = 0;
+                for (int i=0; i<batch_size; i++) {
+                    printf("%d ", iBuf[i]);
+                }
+                printf("\n");
                 for (size_t i = 0; i < outCount; i++) {
                     if (hBuf[i] == int(0))
                         zeroCount++;
@@ -399,10 +408,10 @@ int main(int argc, char* argv[])
                     if ((i + 1) % (seq_len) == 0)
                         outFile << std::endl;
 
-                    if (i < 10)
+                    // if (i < 10)
                         printf("%5d ", hBuf[i]);
-                    if ((i + 1) % (seq_len) == 0 && i < 10)
-                        std::cout << std::endl;
+                    // if ((i + 1) % (seq_len) == 0 && i < 10)
+                    //     std::cout << std::endl;
                 }
                 std::cout << std::endl << "zeroCount = " << zeroCount << std::endl;
             }

@@ -36,7 +36,7 @@ void llama_example(const INIReader reader);
 
 int main(int argc, char* argv[])
 {
-    mpi::initialize(&argc, &argv);
+    fastertransformer::mpi::initialize(&argc, &argv);
     srand(0);
 
     std::string ini_name;
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
         ini_name = std::string(argv[1]);
     }
     else {
-        ini_name = "../examples/cpp/llama/llama_config.ini";
+        ini_name = "/notebooks/FasterTransformer/examples/cpp/llama/llama_config.ini";
     }
 
     INIReader reader = INIReader(ini_name);
@@ -84,6 +84,7 @@ void llama_example(const INIReader reader)
     int int8_mode  = reader.GetInteger("ft_instance_hyperparameter", "int8_mode", 0);
 
     const size_t head_num             = reader.GetInteger(model_name, "head_num");
+    const size_t kv_head_num          = reader.GetInteger(model_name, "kv_head_num");
     const size_t size_per_head        = reader.GetInteger(model_name, "size_per_head");
     const size_t vocab_size           = reader.GetInteger(model_name, "vocab_size");
     const size_t decoder_layers       = reader.GetInteger(model_name, "num_layer");
@@ -104,7 +105,7 @@ void llama_example(const INIReader reader)
     const float  len_penalty                = reader.GetFloat("request", "len_penalty");
     const float  beam_search_diversity_rate = reader.GetFloat("request", "beam_search_diversity_rate");
     const int    min_length                 = reader.GetInteger("request", "min_length", 0);
-    const size_t request_batch_size         = 1; // reader.GetInteger("request", "request_batch_size");
+    const size_t request_batch_size         = reader.GetInteger("request", "request_batch_size");
     // The length of tokens we hope this model to generate
     const int request_output_len = reader.GetInteger("request", "request_output_len");
 
@@ -121,6 +122,7 @@ void llama_example(const INIReader reader)
     // Prepare the parallelism parameters
     int rank       = mpi::getCommWorldRank();
     int world_size = mpi::getCommWorldSize();
+    // world_size = 4;
     if (rank == 0) {
         printf("Total ranks: %d.\n", world_size);
     }
@@ -161,7 +163,7 @@ void llama_example(const INIReader reader)
 
     // Handle bad_words dictionary
     std::vector<int> bad_words;
-    read_word_list("../examples/cpp/llama/bad_words.csv", bad_words);
+    read_word_list("/notebooks/FasterTransformer/examples/cpp/llama/bad_words.csv", bad_words);
 
     int* d_bad_words = nullptr;
     deviceMalloc(&d_bad_words, bad_words.size(), false);
@@ -169,7 +171,7 @@ void llama_example(const INIReader reader)
 
     // Handle stop_words dictionary
     std::vector<int> stop_words;
-    read_word_list("../examples/cpp/llama/stop_words.csv", stop_words);
+    read_word_list("/notebooks/FasterTransformer/examples/cpp/llama/stop_words.csv", stop_words);
 
     const size_t stop_words_len = stop_words.size() / 2;
     // Tile with same dict for each element
@@ -193,7 +195,7 @@ void llama_example(const INIReader reader)
                    max_input_len,
                    end_id,
                    1,
-                   "../examples/cpp/llama/start_ids.csv");
+                   "/notebooks/FasterTransformer/examples/cpp/llama/start_ids.csv");
 
 
     int* d_input_ids;
@@ -278,7 +280,10 @@ void llama_example(const INIReader reader)
     }
 
     const bool                          use_gptj_residual = false;
-    fastertransformer::LlamaWeight<T> gpt_weights(hidden_units,
+    printf("kv_head_num: %d\n", kv_head_num);
+    fastertransformer::LlamaWeight<T> gpt_weights(head_num,
+                                                  kv_head_num,
+                                                  size_per_head,
                                                   inter_size,
                                                   vocab_size,
                                                   decoder_layers,
@@ -310,6 +315,7 @@ void llama_example(const INIReader reader)
                                                        true);  // causal_mask
 
     Llama<T> gpt = Llama<T>(head_num,
+                            kv_head_num,
                             size_per_head,
                             inter_size,
                             decoder_layers,
@@ -445,7 +451,16 @@ void llama_example(const INIReader reader)
             size_t outCount = total_output_len * request_batch_size * beam_width;
             int*   hBuf     = new int[outCount];
 
+            size_t seqLCount = request_batch_size * beam_width;
+            int* seqlBuf = new int[seqLCount];
+
+            size_t inLCount = request_batch_size * beam_width;
+            int* inlBuf = new int[inLCount];
+
             cudaD2Hcpy(hBuf, d_output_ids, outCount);
+            cudaD2Hcpy(seqlBuf, d_sequence_lengths, seqLCount);
+            cudaD2Hcpy(inlBuf, d_sequence_lengths, seqLCount);
+            printf("seqlBuf: %d\n", seqlBuf[0]);
 
             {
                 std::cout << "Writing " << outCount << " elements\n";
@@ -458,11 +473,11 @@ void llama_example(const INIReader reader)
                     if ((i + 1) % (total_output_len) == 0) {
                         outFile << std::endl;
                     }
-
-                    if (i < 10) {
-                        printf("%5d ", hBuf[i]);
-                    }
-                    if ((i + 1) % (total_output_len) == 0 && i < 10) {
+                    printf("%5d ", hBuf[i]);
+                    // if (i < 10) {
+                    //     printf("%5d ", hBuf[i]);
+                    // }
+                    if ((i + 1) % (total_output_len) == 0) {
                         std::cout << std::endl;
                     }
                 }
@@ -471,7 +486,7 @@ void llama_example(const INIReader reader)
             delete[] hBuf;
         }
     }
-
+    return;
     // test time
     struct timeval start, end;
     mpi::barrier();

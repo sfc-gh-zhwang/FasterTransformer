@@ -180,6 +180,10 @@ add_library(longformer_kernels STATIC longformer_kernels.cu)
 set_property(TARGET longformer_kernels PROPERTY POSITION_INDEPENDENT_CODE  ON)
 set_property(TARGET longformer_kernels PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
 
+add_library(repeat_kv_kernels STATIC repeat_kv_kernels.cu)
+set_property(TARGET repeat_kv_kernels PROPERTY POSITION_INDEPENDENT_CODE  ON)
+set_property(TARGET repeat_kv_kernels PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+
 add_library(add_bias_transpose_kernels STATIC add_bias_transpose_kernels.cu)
 set_property(TARGET add_bias_transpose_kernels PROPERTY POSITION_INDEPENDENT_CODE  ON)
 set_property(TARGET add_bias_transpose_kernels PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)

@@ -28,7 +28,9 @@ struct LlamaWeight {
 
     LlamaWeight() = default;
     LlamaWeight(
-        const int                                  hidden_units,
+        const int                                  head_num,
+        const int                                  kv_head_num,
+        const int                                  size_per_head,
         const int                                  inter_size,
         const int                                  vocab_size,
         const int                                  num_layer,
@@ -78,6 +80,9 @@ private:
     void mallocWeights();
     bool isValidLayerParallelId(int l);
 
+    int head_num_;
+    int kv_head_num_;
+    int size_per_head_;
     int hidden_units_;
     int inter_size_;
     int vocab_size_;

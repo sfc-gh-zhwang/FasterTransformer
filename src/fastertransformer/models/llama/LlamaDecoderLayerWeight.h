@@ -30,7 +30,9 @@ struct LlamaDecoderLayerWeight {
 public:
     LlamaDecoderLayerWeight() = default;
     LlamaDecoderLayerWeight(const int int8_mode);
-    LlamaDecoderLayerWeight(const int  hidden_units,
+    LlamaDecoderLayerWeight(const int  head_num,
+                            const int  kv_head_num,
+                            const int  size_per_head,
                             const int  inter_size,
                             const int  tensor_para_size  = 1,
                             const int  tensor_para_rank  = 0,
@@ -48,6 +50,9 @@ public:
     FfnWeight<T>       ffn_weights;
 
 private:
+    int       head_num_;
+    int       kv_head_num_;
+    int       size_per_head_;
     int       hidden_units_;
     int       inter_size_;
     int       tensor_para_size_;

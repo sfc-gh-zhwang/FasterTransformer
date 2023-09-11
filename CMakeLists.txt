@@ -13,7 +13,7 @@
 # limitations under the License.
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR) # for PyTorch extensions, version should be greater than 3.13
 project(FasterTransformer LANGUAGES CXX CUDA)
-
+option(BUILD_MULTI_GPU "Enable multi GPU support" ON)
 find_package(CUDA 10.2 REQUIRED)
 
 if(${CUDA_VERSION_MAJOR} VERSION_GREATER_EQUAL "11")
@@ -328,6 +328,8 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:FfnLayer>
   $<TARGET_OBJECTS:FusedAttentionLayer>
   $<TARGET_OBJECTS:GptContextAttentionLayer>
+  $<TARGET_OBJECTS:LlamaContextAttentionLayer>
+  $<TARGET_OBJECTS:LlamaDecoderSelfAttentionLayer>
   $<TARGET_OBJECTS:GptJ>
   $<TARGET_OBJECTS:GptJContextDecoder>
   $<TARGET_OBJECTS:GptJDecoder>
@@ -362,6 +364,8 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:T5EncoderTritonBackend>
   $<TARGET_OBJECTS:TensorParallelDecoderCrossAttentionLayer>
   $<TARGET_OBJECTS:TensorParallelDecoderSelfAttentionLayer>
+  $<TARGET_OBJECTS:TensorParallelLlamaDecoderSelfAttentionLayer>
+  $<TARGET_OBJECTS:TensorParallelLlamaContextAttentionLayer>
   $<TARGET_OBJECTS:TensorParallelGeluFfnLayer>
   $<TARGET_OBJECTS:TensorParallelSiluFfnLayer>
   $<TARGET_OBJECTS:TensorParallelGptContextAttentionLayer>
@@ -393,6 +397,7 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:fpA_intB_gemm>
   $<TARGET_OBJECTS:gen_relative_pos_bias>
   $<TARGET_OBJECTS:gpt_kernels>
+  $<TARGET_OBJECTS:repeat_kv_kernels>
   $<TARGET_OBJECTS:int8_gemm>
   $<TARGET_OBJECTS:layernorm_int8_kernels>
   $<TARGET_OBJECTS:layernorm_kernels>

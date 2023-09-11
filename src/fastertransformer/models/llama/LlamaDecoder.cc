@@ -16,15 +16,16 @@
 
 #include "src/fastertransformer/models/llama/LlamaDecoder.h"
 #include "src/fastertransformer/layers/TensorParallelSiluFfnLayer.h"
-#include "src/fastertransformer/layers/attention_layers/TensorParallelDecoderSelfAttentionLayer.h"
+#include "src/fastertransformer/layers/attention_layers/TensorParallelLlamaDecoderSelfAttentionLayer.h"
 
 namespace fastertransformer {
 
 template<typename T>
 void LlamaDecoder<T>::initialize()
 {
-    self_attention_layer_ = new TensorParallelDecoderSelfAttentionLayer<T>(0,  // max_batch_size
+    self_attention_layer_ = new TensorParallelLlamaDecoderSelfAttentionLayer<T>(0,  // max_batch_size
                                                                            head_num_,
+                                                                           kv_head_num_,
                                                                            size_per_head_,
                                                                            rotary_embedding_dim_,
                                                                            neox_rotary_style_,
@@ -122,6 +123,7 @@ int LlamaDecoder<T>::getFirstLayerParallelId()
 
 template<typename T>
 LlamaDecoder<T>::LlamaDecoder(size_t                              head_num,
+                              size_t                              kv_head_num,
                               size_t                              size_per_head,
                               size_t                              inter_size,
                               size_t                              num_layer,
@@ -140,6 +142,7 @@ LlamaDecoder<T>::LlamaDecoder(size_t                              head_num,
                               int                                 enable_custom_all_reduce):
     BaseLayer(stream, cublas_wrapper, allocator, is_free_buffer_after_forward),
     head_num_(head_num),
+    kv_head_num_(kv_head_num),
     size_per_head_(size_per_head),
     inter_size_(inter_size),
     num_layer_(num_layer),
@@ -161,6 +164,7 @@ template<typename T>
 LlamaDecoder<T>::LlamaDecoder(LlamaDecoder<T> const& decoder):
     BaseLayer(decoder.stream_, decoder.cublas_wrapper_, decoder.allocator_, decoder.is_free_buffer_after_forward_),
     head_num_(decoder.head_num_),
+    kv_head_num_(decoder.kv_head_num_),
     size_per_head_(decoder.size_per_head_),
     inter_size_(decoder.inter_size_),
     num_layer_(decoder.num_layer_),
@@ -237,6 +241,13 @@ void LlamaDecoder<T>::forward(std::unordered_map<std::string, Tensor>*          
     for (auto t = k_cache.shape.begin() + 2; t != k_cache.shape.end(); ++t) {
         self_k_cache_size.push_back(*t);
     }
+    #ifdef ENABLE_FLEX_DEBUG 
+    printf("self_k_cache_size: ");
+    for (int i=0; i<self_k_cache_size.size(); i++) {
+        printf("%d ", self_k_cache_size[i]);
+    }
+    printf("\n");
+    #endif
     std::vector<size_t> self_v_cache_size;
     self_v_cache_size.push_back(local_batch_size);
     for (auto t = v_cache.shape.begin() + 2; t != v_cache.shape.end(); ++t) {
@@ -265,7 +276,7 @@ void LlamaDecoder<T>::forward(std::unordered_map<std::string, Tensor>*          
             }
         }
 
-        // TODO 使用的是T5 LN，这里是没有int8的参数支持
+        // TODO(zhwang): NO int8 support here, add later.
         invokeGeneralT5LayerNorm(decoder_normed_input_,
                                  layer_input,
                                  gpt_decoder_layer_weight->at(l)->pre_layernorm_weights.gamma,

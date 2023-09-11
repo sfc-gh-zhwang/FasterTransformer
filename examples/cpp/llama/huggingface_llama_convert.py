@@ -17,20 +17,15 @@ import configparser
 import numpy as np
 from pathlib import Path
 
+import torch
 import os
-from transformers import LlamaForCausalLM
-
-# using numpy extension: https://github.com/GreenWaves-Technologies/bfloat16
-# install the library with `pip install bfloat16`
-from bfloat16 import bfloat16
+from transformers import LlamaForCausalLM, AutoConfig
 
 def get_weight_data_type(data_type):
     if data_type == "fp32":
         return np.float32
     elif data_type == "fp16":
         return np.float16
-    elif data_type == "bf16":
-        return bfloat16
     else:
         assert False, f"Invalid weight data type {data_type}"
 
@@ -69,10 +64,30 @@ def split_and_convert(args):
     assert(i_gpu_num % t_gpu_num == 0)
 
     factor = (int)(i_gpu_num / t_gpu_num)
-
     # load position_embedding from rank 0
     # model = torch.load(ckpt_name)
-    model = LlamaForCausalLM.from_pretrained(args.in_file)
+    print(f'load model from {args.in_file}')
+    # model = LlamaForCausalLM.from_pretrained(args.in_file, device_map='auto')
+    config = AutoConfig.from_pretrained(args.in_file)
+    # num_layers = 3
+    # config.num_hidden_layers = num_layers
+    print(config)
+    state_dict = {}
+    for f in os.listdir(args.in_file):
+        if not f.endswith('.bin'):
+            continue
+        w = torch.load(os.path.join(args.in_file, f), map_location='cpu')
+        keys = list(w.keys())
+        for k in keys:
+            if 'model.layers.' not in k:
+                continue
+            l = int(k.split('.')[2])
+            if l < config.num_hidden_layers:
+                continue
+            del w[k]
+        state_dict.update(w)
+
+    model = LlamaForCausalLM.from_pretrained(None, config=config, state_dict=state_dict)
     hf_config = vars(model.config)
     print(f"hf_config: {hf_config}")
 
@@ -82,8 +97,9 @@ def split_and_convert(args):
 
     hidden_size = hf_config["hidden_size"]
     head_num = hf_config["num_attention_heads"]
+    kv_head_num = hf_config["num_key_value_heads"]
     head_size = hidden_size // head_num
-    num_layers = hf_config["num_hidden_layers"]
+    # num_layers = hf_config["num_hidden_layers"]
 
 
     np_weight_data_type = get_weight_data_type(args.weight_data_type)
@@ -94,6 +110,7 @@ def split_and_convert(args):
         config['llama'] = {}
         config['llama']['model_name'] = model_name
         config['llama']["head_num"] = str(head_num)
+        config['llama']["kv_head_num"] = str(kv_head_num)
         config['llama']["size_per_head"] = str(head_size)
         config['llama']["inter_size"] = str(hf_config["intermediate_size"])
         config['llama']["num_layer"] = str(num_layers)
@@ -127,14 +144,36 @@ def split_and_convert(args):
         # first merge QKV into a single weight
         # concat direct to FT shape: [hidden_size, 3, head_num, head_size]
         # copied from huggingface_gptj_ckpt_convert.py
-        qkv_weights = np.stack([
-            param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight']),
-            param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight']),
-            param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight']),
-        ])
-        qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
-        qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
-        split_and_convert_process(saved_dir, factor, qkv_weights_base_name, qkv_weights)
+        # qkv_weights = np.stack([
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight']),
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight']),
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight']),
+        # ])
+        # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
+        q_proj = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight'])
+        k_proj = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight'])
+        v_proj = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight'])
+        q_proj = np.split(q_proj, factor, axis=0)
+        k_proj = np.split(k_proj, factor, axis=0)
+        v_proj = np.split(v_proj, factor, axis=0)
+        for j in range(factor):
+            qkv_weights = np.concatenate((q_proj[j], k_proj[j], v_proj[j]), axis=0)
+            print(qkv_weights.shape)
+            # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
+            qkv_weights = np.transpose(qkv_weights)
+            qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
+            saved_path = saved_dir + "/" + qkv_weights_base_name + ".%d.bin" % j
+            qkv_weights.tofile(saved_path)
+        # qkv_weights = np.concatenate((
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.q_proj.weight']),
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.k_proj.weight']),
+        #     param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.v_proj.weight']),
+        # ), axis=0)
+        # print(qkv_weights.shape)
+        # # qkv_weights = np.transpose(qkv_weights, (2, 0, 1))
+        # qkv_weights = np.transpose(qkv_weights)
+        # qkv_weights_base_name = f'model.layers.{l}.attention.query_key_value.weight'
+        # split_and_convert_process(saved_dir, factor, qkv_weights_base_name, qkv_weights)
 
         # attention dense
         o_weight = param_to_weights(model.state_dict()[f'model.layers.{l}.self_attn.o_proj.weight']).T

@@ -27,6 +27,7 @@ template<typename T>
 void Llama<T>::initialize()
 {
     gpt_context_decoder_ = new LlamaContextDecoder<T>(head_num_,
+                                                      kv_head_num_,
                                                       size_per_head_,
                                                       inter_size_,
                                                       num_layer_,
@@ -47,6 +48,7 @@ void Llama<T>::initialize()
                                                       enable_custom_all_reduce_);
 
     gpt_decoder_ = new LlamaDecoder<T>(head_num_,
+                                       kv_head_num_,
                                        size_per_head_,
                                        inter_size_,
                                        num_layer_,
@@ -125,6 +127,7 @@ void Llama<T>::allocateBuffer(
     h_finished_buf_   = new bool[batchxbeam];
     sequence_lengths_ = (int*)(allocator_->reMalloc(sequence_lengths_, sizeof(int) * batchxbeam, false));
 
+    printf("kv cache byte size: %d\n", sizeof(T) * self_cache_size * 2);
     key_cache_   = (T*)(allocator_->reMalloc(key_cache_, sizeof(T) * self_cache_size * 2, true));
     value_cache_ = key_cache_ + self_cache_size;
     if (beam_width > 1) {
@@ -232,6 +235,7 @@ void Llama<T>::freeBuffer()
 
 template<typename T>
 Llama<T>::Llama(size_t                              head_num,
+                size_t                              kv_head_num,
                 size_t                              size_per_head,
                 size_t                              inter_size,
                 size_t                              num_layer,
@@ -262,6 +266,7 @@ Llama<T>::Llama(size_t                              head_num,
                 float                               shared_contexts_ratio):
     BaseLayer(stream, cublas_wrapper, allocator, is_free_buffer_after_forward, cuda_device_prop),
     head_num_(head_num),
+    kv_head_num_(kv_head_num),
     size_per_head_(size_per_head),
     inter_size_(inter_size),
     num_layer_(num_layer),
@@ -275,6 +280,7 @@ Llama<T>::Llama(size_t                              head_num,
     use_gptj_residual_(use_gptj_residual),
     hidden_units_(head_num * size_per_head),
     local_head_num_(head_num / 1),
+    local_kv_head_num_(kv_head_num / 1),
     attention_type_(attention_type),
     int8_mode_(int8_mode),
     shared_contexts_ratio_(shared_contexts_ratio)
@@ -298,6 +304,7 @@ Llama<T>::Llama(size_t                              head_num,
 
 template<typename T>
 Llama<T>::Llama(size_t                              head_num,
+                size_t                              kv_head_num,
                 size_t                              size_per_head,
                 size_t                              inter_size,
                 size_t                              num_layer,
@@ -330,6 +337,7 @@ Llama<T>::Llama(size_t                              head_num,
                 float                               shared_contexts_ratio):
     BaseLayer(stream, cublas_wrapper, allocator, is_free_buffer_after_forward, cuda_device_prop),
     head_num_(head_num),
+    kv_head_num_(kv_head_num),
     size_per_head_(size_per_head),
     inter_size_(inter_size),
     num_layer_(num_layer),
@@ -345,6 +353,7 @@ Llama<T>::Llama(size_t                              head_num,
     tensor_para_(tensor_para),
     pipeline_para_(pipeline_para),
     local_head_num_(head_num / tensor_para.world_size_),
+    local_kv_head_num_(kv_head_num / tensor_para.world_size_),
     custom_all_reduce_comm_(custom_all_reduce_comm),
     enable_custom_all_reduce_(enable_custom_all_reduce),
     attention_type_(attention_type),
@@ -363,6 +372,7 @@ template<typename T>
 Llama<T>::Llama(Llama<T> const& gpt):
     BaseLayer(gpt),
     head_num_(gpt.head_num_),
+    kv_head_num_(gpt.kv_head_num_),
     size_per_head_(gpt.size_per_head_),
     inter_size_(gpt.inter_size_),
     num_layer_(gpt.num_layer_),
@@ -378,6 +388,7 @@ Llama<T>::Llama(Llama<T> const& gpt):
     tensor_para_(gpt.tensor_para_),
     pipeline_para_(gpt.pipeline_para_),
     local_head_num_(gpt.local_head_num_),
+    local_kv_head_num_(gpt.local_kv_head_num_),
     vocab_size_padded_(gpt.vocab_size_padded_),
     custom_all_reduce_comm_(gpt.custom_all_reduce_comm_),
     enable_custom_all_reduce_(gpt.enable_custom_all_reduce_),
@@ -745,6 +756,7 @@ void Llama<T>::forward(std::unordered_map<std::string, Tensor>*       output_ten
         gpt_context_decoder_->forward(
             &decoder_output_tensors, &decoder_input_tensors, &gpt_weights->decoder_layer_weights);
         sync_check_cuda_error();
+        printf("gpt_context_decoder_->forward done\n");
         invokeDecodingInitialize(finished_buf_,
                                  sequence_lengths_,
                                  nullptr,

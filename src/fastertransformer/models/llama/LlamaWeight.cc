@@ -19,7 +19,9 @@
 namespace fastertransformer {
 
 template<typename T>
-LlamaWeight<T>::LlamaWeight(const int                                  hidden_units,
+LlamaWeight<T>::LlamaWeight(const int                                  head_num,
+                            const int                                  kv_head_num,
+                            const int                                  size_per_head,
                             const int                                  inter_size,
                             const int                                  vocab_size,
                             const int                                  num_layer,
@@ -32,7 +34,10 @@ LlamaWeight<T>::LlamaWeight(const int                                  hidden_un
                             const int                                  int8_mode,
                             PromptLearningType                         prompt_learning_type,
                             std::map<std::string, std::pair<int, int>> prompt_learning_pair):
-    hidden_units_(hidden_units),
+    head_num_(head_num),
+    kv_head_num_(kv_head_num),
+    size_per_head_(size_per_head),
+    hidden_units_(head_num * size_per_head),
     inter_size_(inter_size),
     vocab_size_(vocab_size),
     num_layer_(num_layer),
@@ -64,12 +69,12 @@ LlamaWeight<T>::LlamaWeight(const int                                  hidden_un
     for (int l = 0; l < num_layer_; l++) {
         if (isValidLayerParallelId(l)) {
             decoder_layer_weights.push_back(new LlamaDecoderLayerWeight<T>(
-                hidden_units_, inter_size_, tensor_para_size_, tensor_para_rank_, use_gptj_residual_, int8_mode_));
+                head_num_, kv_head_num_, size_per_head_, inter_size_, tensor_para_size_, tensor_para_rank_, use_gptj_residual_, int8_mode_));
         }
         else {
             // Layer-parallelism: allocate empty layer because
             // this rank does not compute it:
-            decoder_layer_weights.push_back(new LlamaDecoderLayerWeight<T>(0, 0));
+            decoder_layer_weights.push_back(new LlamaDecoderLayerWeight<T>(0, 0, 0, 0));
         }
     }
 
@@ -96,6 +101,9 @@ LlamaWeight<T>::~LlamaWeight()
 
 template<typename T>
 LlamaWeight<T>::LlamaWeight(const LlamaWeight& other):
+    head_num_(other.head_num_),
+    kv_head_num_(other.kv_head_num_),
+    size_per_head_(other.size_per_head_),
     hidden_units_(other.hidden_units_),
     inter_size_(other.inter_size_),
     vocab_size_(other.vocab_size_),
@@ -143,6 +151,9 @@ LlamaWeight<T>::LlamaWeight(const LlamaWeight& other):
 template<typename T>
 LlamaWeight<T>& LlamaWeight<T>::operator=(const LlamaWeight& other)
 {
+    head_num_                   = other.head_num_;
+    kv_head_num_                = other.kv_head_num_;
+    size_per_head_              = other.size_per_head_;
     hidden_units_               = other.hidden_units_;
     inter_size_                 = other.inter_size_;
     vocab_size_                 = other.vocab_size_;
