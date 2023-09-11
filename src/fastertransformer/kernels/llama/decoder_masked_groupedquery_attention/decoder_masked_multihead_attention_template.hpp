@@ -1114,7 +1114,7 @@ template<
     // The number of threads in a threadblock.
     int  THREADS_PER_BLOCK,
     bool HAS_BEAMS>
-__global__ void masked_multihead_attention_kernel(GroupedQuery_attention_params<T> params)
+__global__ void masked_groupedquery_attention_kernel(GroupedQuery_attention_params<T> params)
 {
     using Tk = typename kernel_type_t<T>::Type;
 #ifdef ENABLE_FP8

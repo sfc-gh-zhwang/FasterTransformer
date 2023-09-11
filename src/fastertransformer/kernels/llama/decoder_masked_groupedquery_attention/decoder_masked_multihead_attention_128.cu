@@ -28,7 +28,7 @@
     T, Dh, Dh_MAX, THDS_PER_KEY, THDS_PER_VALUE, THDS_PER_BLOCK, HAS_BEAMS, stream)                \
     size_t smem_sz = mmha::smem_size_in_bytes<T>(params, THDS_PER_VALUE, THDS_PER_BLOCK);          \
     dim3   grid(params.num_heads, params.batch_size);                                                                  \
-    mmha::masked_multihead_attention_kernel<T,                                                                         \
+    mmha::masked_groupedquery_attention_kernel<T,                                                                         \
                                             Dh,                                                                        \
                                             Dh_MAX,                                                                    \
                                             THDS_PER_KEY,                                                              \
