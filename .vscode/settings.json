@@ -91,6 +91,7 @@
         "__string": "cpp",
         "compare": "cpp",
         "concepts": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "__memory": "cpp"
     }
 }
