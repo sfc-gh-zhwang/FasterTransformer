@@ -444,7 +444,7 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
                 ite_cache_offset *= *t;
             }
             cache_offset += ite_cache_offset;
-
+            printf("cache_offset: %d\n", cache_offset);
             T* k_cache_ptr = use_shared_contexts ? k_cache_layer_ : k_cache.getPtrWithOffset<T>(cache_offset);
             T* v_cache_ptr = use_shared_contexts ? v_cache_layer_ : v_cache.getPtrWithOffset<T>(cache_offset);
 
@@ -478,13 +478,13 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
 
             }
             #endif
-
+            printf("use_shared_contexts: %d\n", use_shared_contexts);
             if (use_shared_contexts) {
                 // Even with local batches, we must process the whole K/V caches as any
                 // element in batch_idx_to_compact_idx may reference the local batch
                 // we're processing. We also need to discard references that aren't in
                 // that particular local batch.
-                const size_t cache_stride_per_batch = hidden_units_ / tensor_para_.world_size_ * max_seq_len;
+                const size_t cache_stride_per_batch = kv_head_num_ * size_per_head_ / tensor_para_.world_size_ * max_seq_len;
                 const size_t cache_layer_offset =
                     (l - getFirstLayerParallelId()) * request_batch_size * cache_stride_per_batch;
                 invokeUnCompactCaches(k_cache.getPtrWithOffset<T>(cache_layer_offset),
@@ -493,7 +493,7 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
                                       v_cache_layer_,
                                       input_tensors->at("batch_to_compact_idx").getPtr<int>(),
                                       request_batch_size,  // batch_size (uncompact)
-                                      v_cache.shape[2],    // local_head_num
+                                      v_cache.shape[2],    // local_kv_head_num
                                       max_seq_len,
                                       seq_len,
                                       size_per_head_,
@@ -572,7 +572,6 @@ void LlamaContextDecoder<T>::forward(std::unordered_map<std::string, Tensor>*   
                 }
 
                 sync_check_cuda_error();
-                #define ENABLE_FLEX_DEBUG
                 #ifdef ENABLE_FLEX_DEBUG 
                 if (l == 1) {
                     printf("%d %d: %d %d\n", l, ite, h_token_num, hidden_units_);

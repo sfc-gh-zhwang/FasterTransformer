@@ -43,9 +43,10 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
 
     // output_tensors:
     //      hidden_features [token_num, hidden_dimension]
-    //      key_cache [batch, local_head_num, size_per_head // x, max_seq_len, x]
-    //      value_cache [batch, local_head_num, max_seq_len, size_per_head]
-    printf("LlamaContextAttentionLayer<T>::forward\n");
+    //      key_cache [batch, local_kv_head_num, size_per_head // x, max_seq_len, x]
+    //      value_cache [batch, local_kv_head_num, max_seq_len, size_per_head]
+    printf("LlamaContextAttentionLayer<T>::forward at layer: %d is_final: %d\n", input_tensors->getVal<int>("layer_id"), input_tensors->at("is_final_layer").getVal<bool>());
+    printf("is_free_buffer_after_forward_: %d\n", is_free_buffer_after_forward_);
     FT_LOG_DEBUG("%s start", __PRETTY_FUNCTION__);
     FT_CHECK(output_tensors->at("key_cache").shape.size() == 5);
     FT_CHECK(output_tensors->at("value_cache").shape.size() == 4
@@ -356,11 +357,12 @@ void LlamaContextAttentionLayer<T>::forward(TensorMap*                output_ten
                                 max_seq_len,
                                 size_per_head_,
                                 local_head_num_,
+                                local_kv_head_num_,
                                 stream_);
     // IDEA : after this, k_cache = (batch_size, num_heads, Dh/x, prefix_prompt_len + L, x)
     // k_cache = (batch_size, num_heads, prefix_prompt_len + L, Dh)
     sync_check_cuda_error();
-
+    printf("invokeTranspose4dBatchMajor done\n");
     // TODO: fmha kernels doesn't support different seq lengths of q and kv
     if (attention_type == AttentionType::FUSED_MHA) {
         dispatcher_fp16->setup_causal_masked_fmha(request_seq_len, request_batch_size);

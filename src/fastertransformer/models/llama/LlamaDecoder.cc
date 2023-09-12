@@ -241,6 +241,7 @@ void LlamaDecoder<T>::forward(std::unordered_map<std::string, Tensor>*          
     for (auto t = k_cache.shape.begin() + 2; t != k_cache.shape.end(); ++t) {
         self_k_cache_size.push_back(*t);
     }
+    #define ENABLE_FLEX_DEBUG
     #ifdef ENABLE_FLEX_DEBUG 
     printf("self_k_cache_size: ");
     for (int i=0; i<self_k_cache_size.size(); i++) {
